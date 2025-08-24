@@ -120,22 +120,18 @@
     </style>
 </head>
 <body>
-     <div style="margin-top: 20px; margin-bottom: 20px;" id="home">
-        <a href="../../index.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Home</a>
-        <a href="../wavesAndOscillation.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Back</a>
-    </div>
     <div id="scene-container">
         <canvas id="double-slit-canvas"></canvas>
     </div>
 
     <div id="controls">
         <div class="control-group">
-            <label for="wavelength-slider">Wavelength (λ)</label>
+            <label for="wavelength-slider">Wavelength ($\lambda$)</label>
             <input type="range" id="wavelength-slider" min="0.1" max="5.0" step="0.01" value="1.0">
             <div class="value-display" id="wavelength-value">1.0 m</div>
         </div>
         <div class="control-group">
-            <label for="slit-distance-slider">Slit Distance (d)</label>
+            <label for="slit-distance-slider">Slit Distance ($d$)</label>
             <input type="range" id="slit-distance-slider" min="0.5" max="10.0" step="0.1" value="3.0">
             <div class="value-display" id="slit-distance-value">3.0 m</div>
         </div>
@@ -297,6 +293,51 @@
                 renderer.domElement.addEventListener('mousedown', onMouseDown);
                 renderer.domElement.addEventListener('mousemove', onMouseMove);
                 renderer.domElement.addEventListener('mouseup', onMouseUp);
+
+                // --- Mobile Touch Controls ---
+                let initialTouchPosition = { x: 0, y: 0 };
+
+                function onTouchStart(event) {
+                    // Check for a single touch to prevent multi-finger gestures from interfering
+                    if (event.touches.length === 1) {
+                        const touch = event.touches[0];
+                        isDragging = true;
+                        // Store the initial touch position and update the previous mouse position
+                        // to ensure smooth transition from mouse to touch
+                        initialTouchPosition = { x: touch.clientX, y: touch.clientY };
+                        previousMousePosition = initialTouchPosition;
+                    }
+                }
+
+                function onTouchMove(event) {
+                    // Only process if dragging and there's a single touch
+                    if (!isDragging || event.touches.length !== 1) return;
+                    const touch = event.touches[0];
+                    const deltaX = touch.clientX - previousMousePosition.x;
+                    const deltaY = touch.clientY - previousMousePosition.y;
+
+                    // Apply rotation, with a multiplier for a more responsive feel on mobile
+                    const newRotation = new THREE.Euler().copy(camera.rotation);
+                    newRotation.y += deltaX * rotationSpeed * 2.5;
+                    newRotation.x += deltaY * rotationSpeed * 2.5;
+                    camera.rotation.copy(newRotation);
+
+                    // Update previous position for the next frame
+                    previousMousePosition = { x: touch.clientX, y: touch.clientY };
+
+                    // Prevent default scrolling behavior on mobile
+                    event.preventDefault();
+                }
+
+                function onTouchEnd() {
+                    isDragging = false;
+                }
+
+                // Add event listeners for touch interaction
+                renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
+                renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+                renderer.domElement.addEventListener('touchend', onTouchEnd, { passive: false });
+
 
                 // Handle window resize
                 window.addEventListener('resize', () => {

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Pendulum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        canvas {
+            display: block;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1rem;
+            height: 1rem;
+            background: #48bb78;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 2px #38a169;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 1rem;
+            height: 1rem;
+            background: #48bb78;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 2px #38a169;
+        }
+        /* Custom styling for tooltips */
+        .slider-container {
+            position: relative;
+        }
+        .slider-value {
+            position: absolute;
+            top: -1.5rem;
+            right: 0;
+            font-size: 0.75rem;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body class="p-6 md:p-10 flex flex-col items-center justify-center min-h-screen">
+    <div style="margin-bottom: 20px;" id="home">
+        <a href="../../index.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Home</a>
+        <a href="../wavesAndOscillation.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Back</a>
+    </div>
+    <main class="w-full max-w-6xl space-y-8">
+        <h1 class="text-4xl font-bold text-center text-white mb-6">Simple Pendulum</h1>
+
+        <!-- Canvas for the Pendulum Simulation and Graphs -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Pendulum Simulation -->
+            <div class="flex flex-col items-center p-4 bg-gray-800 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-semibold mb-4 text-white">Pendulum Motion</h2>
+                <canvas id="pendulumCanvas" class="w-full aspect-[4/3] max-h-[500px]"></canvas>
+            </div>
+            
+            <!-- Graphs -->
+            <div class="flex flex-col items-center p-4 bg-gray-800 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-semibold mb-4 text-white">Kinematic Graphs</h2>
+                <canvas id="graphCanvas" class="w-full aspect-[4/3] max-h-[500px]"></canvas>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full">
+            <h2 class="text-2xl font-semibold text-white mb-4">Controls</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- Length Slider -->
+                <div class="slider-container flex flex-col">
+                    <label for="lengthSlider" class="text-sm font-medium text-gray-300">Length (m)</label>
+                    <input type="range" id="lengthSlider" min="0.5" max="2" value="1" step="0.05" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <span id="lengthValue" class="slider-value">1.00 m</span>
+                </div>
+
+                <!-- Mass Slider -->
+                <div class="slider-container flex flex-col">
+                    <label for="massSlider" class="text-sm font-medium text-gray-300">Mass (kg)</label>
+                    <input type="range" id="massSlider" min="0.1" max="5" value="1" step="0.1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <span id="massValue" class="slider-value">1.00 kg</span>
+                </div>
+
+                <!-- Initial Angle Slider -->
+                <div class="slider-container flex flex-col">
+                    <label for="angleSlider" class="text-sm font-medium text-gray-300">Initial Angle (°)</label>
+                    <input type="range" id="angleSlider" min="0" max="170" value="90" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <span id="angleValue" class="slider-value">90.00°</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-center mt-6 space-x-4">
+                <button id="startButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Start</button>
+                <button id="resetButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Reset</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Canvas and Contexts ---
+        const pendulumCanvas = document.getElementById('pendulumCanvas');
+        const pendulumCtx = pendulumCanvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+
+        // --- DOM Elements ---
+        const lengthSlider = document.getElementById('lengthSlider');
+        const massSlider = document.getElementById('massSlider');
+        const angleSlider = document.getElementById('angleSlider');
+        const startButton = document.getElementById('startButton');
+        const resetButton = document.getElementById('resetButton');
+        const lengthValue = document.getElementById('lengthValue');
+        const massValue = document.getElementById('massValue');
+        const angleValue = document.getElementById('angleValue');
+        
+        // --- Simulation Parameters ---
+        let length = parseFloat(lengthSlider.value);
+        let mass = parseFloat(massSlider.value);
+        const g = 9.81; // Acceleration due to gravity (m/s^2)
+        const damping = 0.9999; // Damping factor to simulate friction
+        let angle = (parseFloat(angleSlider.value) * Math.PI) / 180;
+        let angularVelocity = 0;
+        let angularAcceleration = 0;
+        const bobRadius = 15;
+        let originX, originY; // Pivot point coordinates
+        let animationFrameId; // To control the animation loop
+        let isRunning = false;
+        
+        // --- Graphing Data ---
+        let time = 0;
+        const maxDataPoints = 500;
+        const history = {
+            time: [],
+            displacement: [],
+            velocity: [],
+            acceleration: []
+        };
+        const graphTitles = [
+            "x vs. t",
+            "v vs. t",
+            "a vs. t",
+            "x vs. v",
+            "x vs. a",
+            "v vs. a"
+        ];
+        
+        // --- Update UI Sliders ---
+        const updateSliderValues = () => {
+            lengthValue.textContent = `${parseFloat(lengthSlider.value).toFixed(2)} m`;
+            massValue.textContent = `${parseFloat(massSlider.value).toFixed(2)} kg`;
+            angleValue.textContent = `${parseFloat(angleSlider.value).toFixed(2)}°`;
+        };
+        
+        lengthSlider.addEventListener('input', updateSliderValues);
+        massSlider.addEventListener('input', updateSliderValues);
+        angleSlider.addEventListener('input', updateSliderValues);
+        
+        // Initial call to set values
+        updateSliderValues();
+
+        // --- Window Resize Handling ---
+        const resizeCanvases = () => {
+            const containerWidth = pendulumCanvas.parentElement.clientWidth;
+            const containerHeight = containerWidth * 0.75; // Maintain aspect ratio
+            
+            pendulumCanvas.width = containerWidth;
+            pendulumCanvas.height = containerHeight;
+            graphCanvas.width = containerWidth;
+            graphCanvas.height = containerHeight;
+            
+            originX = pendulumCanvas.width / 2;
+            originY = pendulumCanvas.height * 0.2;
+            
+            // Re-render the initial state
+            drawPendulum();
+            drawGraphs();
+        };
+
+        window.addEventListener('resize', resizeCanvases);
+        window.onload = resizeCanvases;
+
+        // --- Pendulum Drawing Logic ---
+        const drawPendulum = () => {
+            // Clear canvas
+            pendulumCtx.clearRect(0, 0, pendulumCanvas.width, pendulumCanvas.height);
+            
+            // Calculate bob position
+            const bobX = originX + length * 300 * Math.sin(angle);
+            const bobY = originY + length * 300 * Math.cos(angle);
+            
+            // Draw pivot point
+            pendulumCtx.beginPath();
+            pendulumCtx.arc(originX, originY, 5, 0, 2 * Math.PI);
+            pendulumCtx.fillStyle = '#cbd5e0';
+            pendulumCtx.fill();
+            
+            // Draw string
+            pendulumCtx.beginPath();
+            pendulumCtx.moveTo(originX, originY);
+            pendulumCtx.lineTo(bobX, bobY);
+            pendulumCtx.strokeStyle = '#a0aec0';
+            pendulumCtx.lineWidth = 2;
+            pendulumCtx.stroke();
+            
+            // Draw bob
+            pendulumCtx.beginPath();
+            pendulumCtx.arc(bobX, bobY, bobRadius, 0, 2 * Math.PI);
+            pendulumCtx.fillStyle = '#48bb78';
+            pendulumCtx.fill();
+        };
+        
+        // --- Graphing Logic ---
+        const drawGraphs = () => {
+            graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+            
+            // Define graph layout
+            const graphWidth = graphCanvas.width / 3;
+            const graphHeight = graphCanvas.height / 2;
+            const plots = [
+                // { x: time, y: displacement }
+                { x: 'time', y: 'displacement', color: '#63b3ed', gridX: 0, gridY: 0 },
+                // { x: time, y: velocity }
+                { x: 'time', y: 'velocity', color: '#f6ad55', gridX: 1, gridY: 0 },
+                // { x: time, y: acceleration }
+                { x: 'time', y: 'acceleration', color: '#e53e3e', gridX: 2, gridY: 0 },
+                // { x: displacement, y: velocity }
+                { x: 'displacement', y: 'velocity', color: '#ed8936', gridX: 0, gridY: 1 },
+                // { x: displacement, y: acceleration }
+                { x: 'displacement', y: 'acceleration', color: '#ecc94b', gridX: 1, gridY: 1 },
+                // { x: velocity, y: acceleration }
+                { x: 'velocity', y: 'acceleration', color: '#4fd1c5', gridX: 2, gridY: 1 }
+            ];
+            
+            plots.forEach((plot, index) => {
+                const xOffset = plot.gridX * graphWidth;
+                const yOffset = plot.gridY * graphHeight;
+                
+                // Draw title
+                graphCtx.fillStyle = '#e2e8f0';
+                graphCtx.font = '14px Inter';
+                graphCtx.textAlign = 'center';
+                graphCtx.fillText(graphTitles[index], xOffset + graphWidth / 2, yOffset + 20);
+
+                // Draw axes
+                graphCtx.strokeStyle = '#a0aec0';
+                graphCtx.lineWidth = 1;
+                
+                // Y-axis
+                graphCtx.beginPath();
+                graphCtx.moveTo(xOffset + 30, yOffset + 30);
+                graphCtx.lineTo(xOffset + 30, yOffset + graphHeight - 30);
+                graphCtx.stroke();
+
+                // X-axis
+                graphCtx.beginPath();
+                graphCtx.moveTo(xOffset + 30, yOffset + graphHeight - 30);
+                graphCtx.lineTo(xOffset + graphWidth - 30, yOffset + graphHeight - 30);
+                graphCtx.stroke();
+                
+                if (history[plot.x].length < 2) return;
+                
+                // Get data for this plot
+                const xData = history[plot.x];
+                const yData = history[plot.y];
+                
+                // Normalize data to canvas coordinates
+                const xMin = Math.min(...xData);
+                const xMax = Math.max(...xData);
+                const yMin = Math.min(...yData);
+                const yMax = Math.max(...yData);
+                
+                const rangeX = (xMax - xMin) === 0 ? 1 : (xMax - xMin);
+                const rangeY = (yMax - yMin) === 0 ? 1 : (yMax - yMin);
+                
+                graphCtx.beginPath();
+                graphCtx.strokeStyle = plot.color;
+                graphCtx.lineWidth = 2;
+                
+                for (let i = 0; i < xData.length; i++) {
+                    const normalizedX = (xData[i] - xMin) / rangeX;
+                    const normalizedY = (yData[i] - yMin) / rangeY;
+                    
+                    const drawX = xOffset + 30 + normalizedX * (graphWidth - 60);
+                    const drawY = yOffset + graphHeight - 30 - normalizedY * (graphHeight - 60);
+                    
+                    if (i === 0) {
+                        graphCtx.moveTo(drawX, drawY);
+                    } else {
+                        graphCtx.lineTo(drawX, drawY);
+                    }
+                }
+                graphCtx.stroke();
+            });
+        };
+        
+        // --- Simulation Loop ---
+        const animate = (timestamp) => {
+            if (!isRunning) {
+                cancelAnimationFrame(animationFrameId);
+                return;
+            }
+            
+            // Physics update
+            const dt = 1/60; // Assumed fixed time step for simplicity
+            angularAcceleration = -(g / length) * Math.sin(angle);
+            angularVelocity += angularAcceleration * dt;
+            angularVelocity *= damping;
+            angle += angularVelocity * dt;
+            
+            // Update time
+            time += dt;
+
+            // Store data
+            history.time.push(time);
+            history.displacement.push(angle);
+            history.velocity.push(angularVelocity);
+            history.acceleration.push(angularAcceleration);
+
+            // Keep history length in check
+            if (history.time.length > maxDataPoints) {
+                for (const key in history) {
+                    history[key].shift();
+                }
+            }
+            
+            drawPendulum();
+            drawGraphs();
+            
+            animationFrameId = requestAnimationFrame(animate);
+        };
+        
+        // --- Event Handlers ---
+        startButton.addEventListener('click', () => {
+            if (isRunning) {
+                // Pause
+                isRunning = false;
+                startButton.textContent = "Resume";
+            } else {
+                // Start or Resume
+                isRunning = true;
+                startButton.textContent = "Pause";
+                animate(0); // Start the animation loop
+            }
+        });
+        
+        resetButton.addEventListener('click', () => {
+            isRunning = false;
+            cancelAnimationFrame(animationFrameId);
+            startButton.textContent = "Start";
+            
+            // Reset simulation parameters
+            length = parseFloat(lengthSlider.value);
+            mass = parseFloat(massSlider.value);
+            angle = (parseFloat(angleSlider.value) * Math.PI) / 180;
+            angularVelocity = 0;
+            angularAcceleration = 0;
+            time = 0;
+            
+            // Clear history arrays
+            for (const key in history) {
+                history[key] = [];
+            }
+            
+            drawPendulum();
+            drawGraphs();
+        });
+
+        // Sliders change parameters
+        lengthSlider.addEventListener('change', (e) => { length = parseFloat(e.target.value); });
+        massSlider.addEventListener('change', (e) => { mass = parseFloat(e.target.value); });
+        angleSlider.addEventListener('change', (e) => { 
+            angle = (parseFloat(e.target.value) * Math.PI) / 180;
+            if (!isRunning) {
+                // If not running, update the pendulum's drawing
+                drawPendulum();
+            }
+        });
+        
+    </script>
+
+    <script>
+
+    </script>
+</body>
+</html>

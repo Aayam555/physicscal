@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Mass Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom styles for the canvases and controls */
+        .simulation-container {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 1024px) {
+            .simulation-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .canvas-container {
+            position: relative;
+            background-color: #1a1a2e;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            aspect-ratio: 16/9;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+        }
+
+        .controls {
+            background-color: #1a1a2e;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .slider-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #4a4a6b;
+            border-radius: 5px;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .button {
+            padding: 0.75rem 1.5rem;
+            font-weight: bold;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        #horizontal-simulation-text,
+        #vertical-simulation-text {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        #horizontal-graph-text,
+        #vertical-graph-text {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        /* Spring drawing style */
+        .spring-segment {
+            stroke: #ff9b40;
+            stroke-width: 4;
+            fill: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 p-8">
+<div style="margin-top: 20px; margin-bottom: 20px;" id="home">
+        <a href="../../index.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Home</a>
+        <a href="../wavesAndOscillation.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Back</a>
+    </div>
+    <main class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-8">
+            Spring Mass System Simulation</h1>
+        <p class="text-center text-lg mb-12 text-gray-400">
+            Explore the simple harmonic motion of horizontal and vertical springs. Drag the masses to change the initial displacement and see how the motion, velocity, and acceleration graphs respond in real-time.
+        </p>
+
+        <div class="simulation-container">
+            <!-- Horizontal Spring Section -->
+            <div class="bg-gray-800 p-6 rounded-2xl flex flex-col gap-4">
+                <div class="relative canvas-container">
+                    <span id="horizontal-simulation-text">Horizontal Spring</span>
+                    <canvas id="horizontal-spring-canvas"></canvas>
+                </div>
+                <div class="relative canvas-container">
+                    <canvas id="horizontal-graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Vertical Spring Section -->
+            <div class="bg-gray-800 p-6 rounded-2xl flex flex-col gap-4">
+                <div class="relative canvas-container">
+                    <span id="vertical-simulation-text">Vertical Spring</span>
+                    <canvas id="vertical-spring-canvas"></canvas>
+                </div>
+                <div class="relative canvas-container">
+                    <canvas id="vertical-graph-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls mt-8">
+            <h2 class="text-2xl font-bold text-gray-200 mb-4">Controls</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Mass Slider -->
+                <div class="slider-group">
+                    <label for="mass-slider" class="block text-gray-400">Mass (kg): <span id="mass-value">10</span></label>
+                    <input type="range" id="mass-slider" min="1" max="20" value="10" step="0.1" class="slider">
+                </div>
+                <!-- Spring Constant Slider -->
+                <div class="slider-group">
+                    <label for="k-slider" class="block text-gray-400">Spring Constant (N/m): <span id="k-value">20</span></label>
+                    <input type="range" id="k-slider" min="1" max="40" value="20" step="0.1" class="slider">
+                </div>
+                <!-- Damping Slider -->
+                <div class="slider-group">
+                    <label for="damping-slider" class="block text-gray-400">Damping (Ns/m): <span id="damping-value">0.2</span></label>
+                    <input type="range" id="damping-slider" min="0" max="1" value="0.2" step="0.01" class="slider">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-center">
+                <button id="reset-button" class="button bg-blue-500 text-white hover:bg-blue-600">Reset</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global constants and variables
+        const G = 9.81; // Acceleration due to gravity
+        const PADDING = 40; // Canvas padding
+        const HISTORY_SIZE = 500; // Number of data points to store for graphs
+
+        // --- Helper Functions ---
+        /**
+         * Converts a value from one range to another.
+         * @param {number} value The value to convert.
+         * @param {number} oldMin The minimum of the original range.
+         * @param {number} oldMax The maximum of the original range.
+         * @param {number} newMin The minimum of the new range.
+         * @param {number} newMax The maximum of the new range.
+         * @returns {number} The converted value.
+         */
+        const map = (value, oldMin, oldMax, newMin, newMax) => {
+            return (value - oldMin) / (oldMax - oldMin) * (newMax - newMin) + newMin;
+        };
+
+        // --- Class to handle the spring system and its state ---
+        class SpringSystem {
+            /**
+             * @param {string} type 'horizontal' or 'vertical'.
+             */
+            constructor(type, mass, k, damping, initialDisplacement) {
+                this.type = type;
+                this.mass = mass;
+                this.k = k;
+                this.damping = damping;
+                this.initialDisplacement = initialDisplacement;
+                this.time = 0;
+                this.dt = 0.01; // Time step
+                this.x = initialDisplacement;
+                this.v = 0;
+                this.a = 0;
+                this.history = [];
+                this.isDragging = false;
+                this.equilibriumPosition = 0; // Relative to canvas center
+
+                // Calculate equilibrium position for vertical spring
+                if (this.type === 'vertical') {
+                    this.equilibriumPosition = this.mass * G / this.k;
+                }
+            }
+
+            // Update the state of the spring system
+            update() {
+                // Hooke's Law: F = -kx (restoring force)
+                let restoringForce = -this.k * this.x;
+                // Damping force: F_d = -bv
+                let dampingForce = -this.damping * this.v;
+                // Total force
+                let totalForce = restoringForce + dampingForce;
+
+                // Add gravity for vertical spring
+                if (this.type === 'vertical') {
+                    // Gravity acts as an offset to the equilibrium position
+                    let gravityForce = -this.k * (this.x + this.equilibriumPosition);
+                    totalForce = -this.k * this.x + dampingForce;
+                }
+
+                // Newton's second law: F = ma -> a = F/m
+                this.a = totalForce / this.mass;
+
+                // Update velocity and displacement using Euler integration
+                this.v += this.a * this.dt;
+                this.x += this.v * this.dt;
+                this.time += this.dt;
+
+                // Add current state to history for graphing
+                this.history.push({
+                    time: this.time,
+                    x: this.x,
+                    v: this.v,
+                    a: this.a
+                });
+                if (this.history.length > HISTORY_SIZE) {
+                    this.history.shift(); // Remove the oldest point
+                }
+            }
+
+            // Reset the system to its initial state
+            reset() {
+                this.time = 0;
+                this.x = this.initialDisplacement;
+                this.v = 0;
+                this.a = 0;
+                this.history = [];
+            }
+        }
+
+        // --- Canvas Setup and Drawing Functions ---
+        /**
+         * Draws the spring animation on a canvas.
+         * @param {HTMLCanvasElement} canvas The canvas element.
+         * @param {SpringSystem} system The spring system to draw.
+         */
+        function drawSpringAnimation(canvas, system) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear canvas with a transparent fill to allow the background color to show
+            ctx.clearRect(0, 0, width, height);
+
+            // Calculate center positions
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const massRadius = 30; // Radius of the mass
+
+            // Draw the spring and mass
+            if (system.type === 'horizontal') {
+                const wallX = PADDING;
+                const massX = centerX + system.x;
+
+                // Draw the wall
+                ctx.fillStyle = '#4a4a6b';
+                ctx.fillRect(wallX - 5, centerY - 50, 10, 100);
+
+                // Draw the spring
+                const springLength = massX - wallX;
+                const numCoils = 15;
+                const coilHeight = 15;
+                const coilWidth = 10;
+                const coils = springLength / numCoils;
+
+                ctx.strokeStyle = '#ff9b40';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(wallX, centerY);
+                for (let i = 0; i < numCoils; i++) {
+                    ctx.lineTo(wallX + (i + 0.5) * coils, centerY + (i % 2 === 0 ? coilHeight : -coilHeight));
+                }
+                ctx.lineTo(massX, centerY);
+                ctx.stroke();
+
+                // Draw the mass
+                ctx.fillStyle = '#ff6b6b';
+                ctx.beginPath();
+                ctx.arc(massX, centerY, massRadius, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Draw equilibrium line
+                ctx.strokeStyle = '#5a5a7b';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(centerX, PADDING);
+                ctx.lineTo(centerX, height - PADDING);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else if (system.type === 'vertical') {
+                const ceilingY = PADDING;
+                const equilibriumY = centerY + system.equilibriumPosition;
+                const massY = centerY + system.x;
+
+                // Draw the ceiling
+                ctx.fillStyle = '#4a4a6b';
+                ctx.fillRect(centerX - 50, ceilingY - 5, 100, 10);
+
+                // Draw the spring
+                const springLength = massY - ceilingY;
+                const numCoils = 15;
+                const coilWidth = 15;
+                const coils = springLength / numCoils;
+
+                ctx.strokeStyle = '#ff9b40';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(centerX, ceilingY);
+                for (let i = 0; i < numCoils; i++) {
+                    ctx.lineTo(centerX + (i % 2 === 0 ? coilWidth : -coilWidth), ceilingY + (i + 0.5) * coils);
+                }
+                ctx.lineTo(centerX, massY);
+                ctx.stroke();
+
+                // Draw the mass
+                ctx.fillStyle = '#ff6b6b';
+                ctx.beginPath();
+                ctx.arc(centerX, massY, massRadius, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Draw equilibrium line
+                ctx.strokeStyle = '#5a5a7b';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(PADDING, equilibriumY);
+                ctx.lineTo(width - PADDING, equilibriumY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        /**
+         * Draws the graphs for displacement, velocity, and acceleration.
+         * @param {HTMLCanvasElement} canvas The canvas element.
+         * @param {SpringSystem} system The spring system data.
+         */
+        function drawGraph(canvas, system) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const history = system.history;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            if (history.length < 2) return;
+
+            // Find min/max values for scaling
+            const maxVal = Math.max(
+                ...history.map(p => Math.abs(p.x)),
+                ...history.map(p => Math.abs(p.v)),
+                ...history.map(p => Math.abs(p.a))
+            );
+            const scaleY = (height - PADDING * 2) / (2 * maxVal + 1e-9); // Add a small value to avoid division by zero
+            const scaleX = (width - PADDING * 2) / (HISTORY_SIZE - 1);
+
+            // Draw axes and labels
+            ctx.strokeStyle = '#5a5a7b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(PADDING, height / 2);
+            ctx.lineTo(width - PADDING, height / 2); // X-axis (time)
+            ctx.moveTo(width / 2, PADDING);
+            ctx.lineTo(width / 2, height - PADDING); // Y-axis (value)
+            ctx.stroke();
+
+            // Draw legend
+            ctx.font = '12px Inter';
+            ctx.fillStyle = 'white';
+            ctx.fillText('Displacement', PADDING + 10, PADDING);
+            ctx.fillText('Velocity', PADDING + 10, PADDING + 20);
+            ctx.fillText('Acceleration', PADDING + 10, PADDING + 40);
+
+            ctx.fillStyle = '#4299e1'; // Blue for displacement
+            ctx.fillRect(PADDING, PADDING - 8, 8, 8);
+            ctx.fillStyle = '#48bb78'; // Green for velocity
+            ctx.fillRect(PADDING, PADDING + 12, 8, 8);
+            ctx.fillStyle = '#fc8181'; // Red for acceleration
+            ctx.fillRect(PADDING, PADDING + 32, 8, 8);
+
+            // Function to draw a line for a given property
+            const drawLine = (prop, color) => {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                const startX = width - PADDING - (history.length - 1) * scaleX;
+                ctx.moveTo(startX, height / 2 - history[0][prop] * scaleY);
+                for (let i = 1; i < history.length; i++) {
+                    const x = width - PADDING - (history.length - 1 - i) * scaleX;
+                    const y = height / 2 - history[i][prop] * scaleY;
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            };
+
+            // Draw the three graphs
+            drawLine('x', '#4299e1'); // Displacement (blue)
+            drawLine('v', '#48bb78'); // Velocity (green)
+            drawLine('a', '#fc8181'); // Acceleration (red)
+        }
+
+        // --- Main Application Logic ---
+        window.onload = function() {
+            // Get canvas elements
+            const horizontalCanvas = document.getElementById('horizontal-spring-canvas');
+            const horizontalGraphCanvas = document.getElementById('horizontal-graph-canvas');
+            const verticalCanvas = document.getElementById('vertical-spring-canvas');
+            const verticalGraphCanvas = document.getElementById('vertical-graph-canvas');
+
+            // Set canvas dimensions to fit container
+            const setCanvasSize = () => {
+                horizontalCanvas.width = horizontalCanvas.clientWidth;
+                horizontalCanvas.height = horizontalCanvas.clientHeight;
+                horizontalGraphCanvas.width = horizontalGraphCanvas.clientWidth;
+                horizontalGraphCanvas.height = horizontalGraphCanvas.clientHeight;
+                verticalCanvas.width = verticalCanvas.clientWidth;
+                verticalCanvas.height = verticalCanvas.clientHeight;
+                verticalGraphCanvas.width = verticalGraphCanvas.clientWidth;
+                verticalGraphCanvas.height = verticalGraphCanvas.clientHeight;
+            };
+            setCanvasSize();
+            window.addEventListener('resize', setCanvasSize);
+
+            // Get control elements
+            const massSlider = document.getElementById('mass-slider');
+            const kSlider = document.getElementById('k-slider');
+            const dampingSlider = document.getElementById('damping-slider');
+            const massValueSpan = document.getElementById('mass-value');
+            const kValueSpan = document.getElementById('k-value');
+            const dampingValueSpan = document.getElementById('damping-value');
+            const resetButton = document.getElementById('reset-button');
+
+            // Initial spring systems
+            let mass = parseFloat(massSlider.value);
+            let k = parseFloat(kSlider.value);
+            let damping = parseFloat(dampingSlider.value);
+            let horizontalSystem = new SpringSystem('horizontal', mass, k, damping, 150);
+            let verticalSystem = new SpringSystem('vertical', mass, k, damping, -150);
+
+            // Update system parameters based on sliders
+            const updateParameters = () => {
+                mass = parseFloat(massSlider.value);
+                k = parseFloat(kSlider.value);
+                damping = parseFloat(dampingSlider.value);
+
+                massValueSpan.textContent = mass.toFixed(1);
+                kValueSpan.textContent = k.toFixed(1);
+                dampingValueSpan.textContent = damping.toFixed(2);
+
+                horizontalSystem.mass = mass;
+                horizontalSystem.k = k;
+                horizontalSystem.damping = damping;
+
+                verticalSystem.mass = mass;
+                verticalSystem.k = k;
+                verticalSystem.damping = damping;
+                verticalSystem.equilibriumPosition = verticalSystem.mass * G / verticalSystem.k;
+            };
+
+            massSlider.addEventListener('input', updateParameters);
+            kSlider.addEventListener('input', updateParameters);
+            dampingSlider.addEventListener('input', updateParameters);
+
+            // Reset button functionality
+            resetButton.addEventListener('click', () => {
+                horizontalSystem.reset();
+                verticalSystem.reset();
+            });
+
+            // Handle dragging the mass for initial displacement
+            const handleDrag = (canvas, system) => {
+                const getMousePos = (event) => {
+                    const rect = canvas.getBoundingClientRect();
+                    return {
+                        x: event.clientX - rect.left,
+                        y: event.clientY - rect.top
+                    };
+                };
+
+                const startDrag = (event) => {
+                    event.preventDefault();
+                    const pos = getMousePos(event);
+                    let massPos;
+                    if (system.type === 'horizontal') {
+                        massPos = horizontalCanvas.width / 2 + system.x;
+                        if (Math.abs(pos.x - massPos) < 40 && Math.abs(pos.y - horizontalCanvas.height / 2) < 40) {
+                            system.isDragging = true;
+                        }
+                    } else {
+                        massPos = verticalCanvas.height / 2 + system.x;
+                        if (Math.abs(pos.y - massPos) < 40 && Math.abs(pos.x - verticalCanvas.width / 2) < 40) {
+                            system.isDragging = true;
+                        }
+                    }
+                };
+
+                const onDrag = (event) => {
+                    if (!system.isDragging) return;
+                    event.preventDefault();
+                    const pos = getMousePos(event);
+                    system.v = 0; // Stop motion while dragging
+                    if (system.type === 'horizontal') {
+                        system.x = pos.x - horizontalCanvas.width / 2;
+                    } else {
+                        system.x = pos.y - verticalCanvas.height / 2;
+                    }
+                    system.initialDisplacement = system.x;
+                    system.history = []; // Clear history to start new graph
+                };
+
+                const endDrag = () => {
+                    system.isDragging = false;
+                };
+
+                canvas.addEventListener('mousedown', startDrag);
+                canvas.addEventListener('mousemove', onDrag);
+                canvas.addEventListener('mouseup', endDrag);
+                canvas.addEventListener('mouseleave', endDrag);
+
+                // Touch events for mobile
+                canvas.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
+                canvas.addEventListener('touchmove', (e) => onDrag(e.touches[0]));
+                canvas.addEventListener('touchend', endDrag);
+            };
+
+            handleDrag(horizontalCanvas, horizontalSystem);
+            handleDrag(verticalCanvas, verticalSystem);
+
+            // The main animation loop
+            const animate = () => {
+                if (!horizontalSystem.isDragging) {
+                    horizontalSystem.update();
+                }
+                drawSpringAnimation(horizontalCanvas, horizontalSystem);
+                drawGraph(horizontalGraphCanvas, horizontalSystem);
+
+                if (!verticalSystem.isDragging) {
+                    verticalSystem.update();
+                }
+                drawSpringAnimation(verticalCanvas, verticalSystem);
+                drawGraph(verticalGraphCanvas, verticalSystem);
+
+                requestAnimationFrame(animate);
+            };
+
+            // Start the simulation
+            animate();
+        };
+    </script>
+</body>
+
+</html>

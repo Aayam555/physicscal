@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Water Flow Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f4f8;
+        }
+        canvas {
+            display: block;
+        }
+        .ui-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+        }
+        button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        button:active {
+            background-color: #1d4ed8;
+            transform: translateY(0);
+        }
+        .info {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #4a5568;
+            text-align: center;
+        }
+        .info span {
+            font-weight: bold;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui-container">
+        <h1 class="text-xl font-bold mb-2 text-gray-700">3D Water Flow Simulation</h1>
+        <div class="controls">
+            <button id="resetBtn">Reset Simulation</button>
+        </div>
+        <p class="info">
+            <span id="waterLevelInfo">Water Level: 100%</span>
+        </p>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            // --- Scene Setup ---
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xf0f4f8);
+            document.body.appendChild(renderer.domElement);
+
+            // --- Controls ---
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            camera.position.set(5, 5, 5);
+            controls.update();
+
+            // --- Simulation Parameters & Constants ---
+            const g = 9.8; // Acceleration due to gravity (m/s^2)
+            const CONTAINER_WIDTH = 2; // meters
+            const CONTAINER_HEIGHT = 3; // meters
+            const CONTAINER_DEPTH = 1.5; // meters
+            const HOLE_RADIUS = 0.05;
+            const PARTICLE_LIFETIME = 1000; // in frames
+
+            // --- State Variables ---
+            let waterLevel = CONTAINER_HEIGHT; // Current water level in meters
+            let holes = []; // Array to store hole objects
+            let particles = []; // Array to store particle objects
+
+            // --- 3D Objects ---
+            let containerMesh;
+            let waterMesh;
+            let particleGroup;
+
+            // --- UI Elements ---
+            const resetBtn = document.getElementById('resetBtn');
+            const waterLevelInfo = document.getElementById('waterLevelInfo');
+            
+            // --- Lighting ---
+            const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            // --- Functions ---
+
+            /**
+             * Initializes the 3D scene and simulation objects.
+             */
+            function init() {
+                // Clear any existing objects
+                while(scene.children.length > 0){ 
+                    scene.remove(scene.children[0]); 
+                }
+                
+                // Add lights back
+                scene.add(ambientLight);
+                scene.add(directionalLight);
+
+                // Create the container (walls only)
+                const containerGeometry = new THREE.BoxGeometry(CONTAINER_WIDTH, CONTAINER_HEIGHT, CONTAINER_DEPTH);
+                const containerMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x94a3b8,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.BackSide // Render inner faces
+                });
+                containerMesh = new THREE.Mesh(containerGeometry, containerMaterial);
+                containerMesh.position.y = CONTAINER_HEIGHT / 2;
+                scene.add(containerMesh);
+
+                // Create the water plane
+                const waterGeometry = new THREE.PlaneGeometry(CONTAINER_WIDTH, CONTAINER_DEPTH);
+                const waterMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x60a5fa,
+                    transparent: true,
+                    opacity: 0.7,
+                });
+                waterMesh = new THREE.Mesh(waterGeometry, waterMaterial);
+                waterMesh.rotation.x = -Math.PI / 2;
+                scene.add(waterMesh);
+
+                // Create a group for particles
+                particleGroup = new THREE.Group();
+                scene.add(particleGroup);
+
+                // Reset state
+                waterLevel = CONTAINER_HEIGHT;
+                holes = [];
+                particles = [];
+
+                // Explicitly define the holes to ensure correct placement
+                // Now placing the holes on the right side to make the water flow right
+                holes.push({ x: CONTAINER_WIDTH / 2, y: CONTAINER_HEIGHT / 2, z: 0, isOptimal: true });
+
+                // Add other holes at symmetrical positions to prove the optimal point
+                holes.push({ x: CONTAINER_WIDTH / 2, y: CONTAINER_HEIGHT * 0.25, z: 0, isOptimal: false });
+                holes.push({ x: CONTAINER_WIDTH / 2, y: CONTAINER_HEIGHT * 0.75, z: 0, isOptimal: false });
+                
+                // Start the animation loop
+                animate();
+            }
+
+            /**
+             * Updates the state of the simulation for the next frame.
+             */
+            function update() {
+                // Simulate water level drop
+                if (waterLevel > 0) {
+                     // Decay based on the total flow from all holes
+                    let totalFlow = 0;
+                    holes.forEach(hole => {
+                        const h = waterLevel - hole.y;
+                        if (h > 0) {
+                            const velocity = Math.sqrt(2 * g * h);
+                            totalFlow += velocity * Math.PI * (HOLE_RADIUS)**2; // Area * Velocity
+                        }
+                    });
+                    const waterVolume = CONTAINER_WIDTH * CONTAINER_DEPTH * waterLevel;
+                    const newWaterVolume = waterVolume - (totalFlow * 0.01); // 0.01 is a small time step
+                    waterLevel = Math.max(0, newWaterVolume / (CONTAINER_WIDTH * CONTAINER_DEPTH));
+                }
+
+                // Update water mesh position
+                waterMesh.position.y = waterLevel;
+
+                // Emit new particles from each hole
+                holes.forEach(hole => {
+                    const h = waterLevel - hole.y; // 'h' in Torricelli's Law
+                    if (h > 0) {
+                        const velocity = Math.sqrt(2 * g * h);
+                        // Emit a new particle with initial velocity and position
+                        const particle = new THREE.Mesh(
+                            new THREE.SphereGeometry(HOLE_RADIUS * 0.5, 8, 8),
+                            new THREE.MeshBasicMaterial({ color: hole.isOptimal ? 0x00ff00 : 0x60a5fa }) // Green for optimal stream
+                        );
+                        particle.position.set(hole.x, hole.y, hole.z);
+                        // Flow direction is now positive x (to the right)
+                        particle.userData.vx = velocity;
+                        particle.userData.vy = 0;
+                        particle.userData.vz = 0;
+                        particle.userData.lifespan = PARTICLE_LIFETIME;
+                        particleGroup.add(particle);
+                        particles.push(particle);
+                    }
+                });
+
+                // Update particle positions
+                particles.forEach(p => {
+                    // Update vertical velocity due to gravity
+                    p.userData.vy -= g * (1/60); // Assuming 60 fps
+                    // Update position
+                    p.position.x += p.userData.vx * (1/60);
+                    p.position.y += p.userData.vy * (1/60);
+                    p.position.z += p.userData.vz * (1/60);
+                    p.userData.lifespan--;
+                });
+                
+                // Remove dead particles
+                particles = particles.filter(p => p.userData.lifespan > 0);
+                
+                // Update UI text
+                const waterLevelPercent = (waterLevel / CONTAINER_HEIGHT) * 100;
+                waterLevelInfo.textContent = `Water Level: ${waterLevelPercent.toFixed(1)}%`;
+            }
+
+            /**
+             * The main animation loop.
+             */
+            function animate() {
+                requestAnimationFrame(animate);
+                update();
+                controls.update(); // only required if controls.enableDamping = true, or if you have a multi-camera setup
+                renderer.render(scene, camera);
+            }
+
+            // --- Event Listeners ---
+            resetBtn.addEventListener('click', init);
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Start the simulation
+            init();
+        };
+    </script>
+</body>
+</html>
+V

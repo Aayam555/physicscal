@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Three-Body Problem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #app-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 90vmin;
+            height: 90vmin;
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            display: block;
+            background-color: #0d1117;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: #21262d;
+            color: #58a6ff;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            border: 1px solid #30363d;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            background-color: #30363d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        #info-message {
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(33, 38, 45, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            z-index: 20;
+            text-align: center;
+        }
+
+        #info-message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+     <div style="margin: 30px;" id="home">
+        <a href="../../index.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Home</a>
+        <a href="../mechanics.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Back</a>
+    </div>
+    <div id="app-container">
+        <div id="info-message"></div>
+        <div id="canvas-container">
+            <canvas id="threeBodyCanvas"></canvas>
+        </div>
+        <div class="controls">
+            <button id="reset-btn" class="btn">Reset Simulation</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Global Variables ---
+        const canvas = document.getElementById('threeBodyCanvas');
+        const ctx = canvas.getContext('2d');
+        const infoMessage = document.getElementById('info-message');
+        const resetBtn = document.getElementById('reset-btn');
+
+        let bodies = [];
+        let trails = [];
+        const trailLength = 500;
+        const G = 6.67430e-11; // Gravitational constant
+        let dt = 10000; // Time step for simulation (can be adjusted for faster/slower)
+        let isRunning = false;
+        let bodyCount = 0;
+        const initialMasses = [1e15, 5e14, 2e14];
+        const initialColors = ['#e91e63', '#ffeb3b', '#2196f3'];
+        let messageTimeout;
+        const scaleFactor = 10000; // Scale positions to fit on canvas
+
+        // --- Body Object and Physics ---
+        class Body {
+            constructor(mass, radius, color, x, y) {
+                this.mass = mass;
+                this.position = { x: x, y: y };
+                this.velocity = { x: 0, y: 0 };
+                this.acceleration = { x: 0, y: 0 };
+                this.radius = radius;
+                this.color = color;
+            }
+
+            // Update the body's velocity and position based on acceleration
+            update() {
+                this.velocity.x += this.acceleration.x * dt;
+                this.velocity.y += this.acceleration.y * dt;
+                this.position.x += this.velocity.x * dt;
+                this.position.y += this.velocity.y * dt;
+            }
+        }
+
+        // --- Core Physics Logic ---
+        function calculateGravity() {
+            // Reset acceleration for all bodies
+            bodies.forEach(body => {
+                body.acceleration.x = 0;
+                body.acceleration.y = 0;
+            });
+
+            // Calculate forces between each pair of bodies
+            for (let i = 0; i < bodies.length; i++) {
+                for (let j = i + 1; j < bodies.length; j++) {
+                    const body1 = bodies[i];
+                    const body2 = bodies[j];
+
+                    // Vector between bodies
+                    const dx = body2.position.x - body1.position.x;
+                    const dy = body2.position.y - body1.position.y;
+                    const distanceSquared = dx * dx + dy * dy;
+                    const distance = Math.sqrt(distanceSquared);
+
+                    // Skip if bodies are too close to avoid division by zero
+                    if (distance < 5) continue;
+
+                    // Calculate force magnitude using Newton's law of universal gravitation
+                    const forceMagnitude = (G * body1.mass * body2.mass) / distanceSquared;
+
+                    // Calculate acceleration for each body
+                    // a = F / m
+                    const a1 = forceMagnitude / body1.mass;
+                    const a2 = forceMagnitude / body2.mass;
+
+                    // Add acceleration vectors to the bodies
+                    body1.acceleration.x += a1 * (dx / distance);
+                    body1.acceleration.y += a1 * (dy / distance);
+                    body2.acceleration.x -= a2 * (dx / distance);
+                    body2.acceleration.y -= a2 * (dy / distance);
+                }
+            }
+        }
+
+        function updateSimulation() {
+            if (!isRunning) return;
+
+            calculateGravity();
+            bodies.forEach(body => body.update());
+
+            // Update trails
+            bodies.forEach((body, index) => {
+                trails[index].push({ x: body.position.x, y: body.position.y });
+                if (trails[index].length > trailLength) {
+                    trails[index].shift();
+                }
+            });
+        }
+
+        // --- Drawing/Rendering Logic ---
+        function draw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw trails first so they are behind the bodies
+            trails.forEach((trail, index) => {
+                ctx.beginPath();
+                ctx.strokeStyle = initialColors[index];
+                ctx.lineWidth = 1;
+
+                if (trail.length > 1) {
+                    const firstPos = convertToCanvasCoords(trail[0]);
+                    ctx.moveTo(firstPos.x, firstPos.y);
+
+                    for (let i = 1; i < trail.length; i++) {
+                        const nextPos = convertToCanvasCoords(trail[i]);
+                        ctx.lineTo(nextPos.x, nextPos.y);
+                    }
+                }
+                ctx.stroke();
+            });
+
+            // Draw the bodies
+            bodies.forEach(body => {
+                const canvasPos = convertToCanvasCoords(body.position);
+                ctx.beginPath();
+                ctx.arc(canvasPos.x, canvasPos.y, body.radius, 0, 2 * Math.PI);
+                ctx.fillStyle = body.color;
+                ctx.fill();
+            });
+        }
+
+        // --- Coordinate Conversion ---
+        function convertToCanvasCoords(position) {
+            return {
+                x: (position.x / scaleFactor) + canvas.width / 2,
+                y: (position.y / scaleFactor) + canvas.height / 2
+            };
+        }
+
+        function convertToWorldCoords(canvasCoords) {
+            return {
+                x: (canvasCoords.x - canvas.width / 2) * scaleFactor,
+                y: (canvasCoords.y - canvas.height / 2) * scaleFactor
+            };
+        }
+
+        // --- Animation Loop ---
+        function animate() {
+            updateSimulation();
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        // --- User Interaction ---
+        function showMessage(msg) {
+            infoMessage.textContent = msg;
+            infoMessage.classList.add('show');
+            clearTimeout(messageTimeout);
+            messageTimeout = setTimeout(() => {
+                infoMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        function handleCanvasClick(event) {
+            if (bodyCount >= 3) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            const worldPos = convertToWorldCoords({ x: mouseX, y: mouseY });
+
+            const mass = initialMasses[bodyCount];
+            const radius = Math.cbrt(mass / 1e12); // Scale radius for visual size
+            const color = initialColors[bodyCount];
+
+            const newBody = new Body(mass, radius, color, worldPos.x, worldPos.y);
+            bodies.push(newBody);
+            trails.push([]);
+            bodyCount++;
+            draw(); // Draw the newly placed body immediately
+
+            if (bodyCount < 3) {
+                showMessage(`Click to place Mass ${bodyCount + 1}`);
+            } else {
+                showMessage('Simulation starting!');
+                setTimeout(() => {
+                    isRunning = true;
+                }, 500);
+            }
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            bodies = [];
+            trails = [];
+            bodyCount = 0;
+            draw();
+            showMessage('Simulation reset. Click to place Mass 1.');
+        }
+
+        // --- Initialization ---
+        function init() {
+            const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+            canvas.width = size;
+            canvas.height = size;
+            resetSimulation();
+        }
+
+        window.onload = function () {
+            init();
+            animate();
+        };
+
+        window.addEventListener('resize', init);
+        canvas.addEventListener('click', handleCanvasClick);
+        resetBtn.addEventListener('click', resetSimulation);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Friction Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding-top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .simulation-container {
+            width: 22rem;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        canvas {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding: 20px;
+            box-sizing: border-box;
+            pointer-events: none; /* Allows mouse events to pass through to the canvas */
+        }
+        .ui-top-panels {
+            display: flex;
+            flex-direction: column; /* Stacks vertically on small screens */
+            gap: 10px;
+            width: 100%;
+            justify-content: space-between;
+            pointer-events: auto; /* Re-enable pointer events for the controls */
+        }
+        @media (min-width: 768px) {
+            .ui-top-panels {
+                flex-direction: row; /* Arranges horizontally on medium screens and up */
+            }
+        }
+        .controls-container {
+            margin-top: 10px;
+            width: 20rem;
+            max-width: 600px;
+            background-color: rgba(45, 55, 72, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: auto; /* Re-enable pointer events for the controls */
+        }
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #4a5568;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4299e1;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4299e1;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2b6cb0;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1000;
+        }
+        .info-panel, .graph-container {
+            background-color: rgba(45, 55, 72, 0.8);
+            border-radius: 12px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+        }
+        .info-panel {
+            width: 100%;
+            max-width: 350px;
+        }
+        .graph-container {
+            width: 100%;
+            max-width: 350px;
+            height: 250px; /* Fixed height for consistent graph proportions */
+            overflow: hidden;
+        }
+        .reset-button {
+            background-color: #e53e3e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .reset-button:hover {
+            background-color: #c53030;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 items-center justify-center min-h-screen">
+    <!-- This canvas will contain the Three.js simulation -->
+    <div style="position: relative; bottom: 50%; margin-top: 50px;" id="home">
+        <a href="../../index.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Home</a>
+        <a href="../mechanics.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Back</a>
+    </div>
+
+    <!-- UI Overlay for all controls and panels -->
+    <div class="ui-overlay">
+        
+        
+        <!-- Top panels (info and graph) -->
+        <div class="ui-top-panels">
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <div class="text-sm">Applied Force: <span id="appliedForceValue">0</span> N</div>
+                <div class="text-sm">Frictional Force: <span id="frictionForceValue">0</span> N</div>
+                <div class="text-sm">Status: <span id="statusText">Static</span></div>
+                <div class="text-sm">Max Static Friction (Fs,max): <span id="fsMaxValue">20</span> N</div>
+                <div class="text-sm">Kinetic Friction (Fk): <span id="fkValue">15</span> N</div>
+            </div>
+            <div class="simulation-container">
+        <canvas id="simulationCanvas"></canvas>
+    </div>
+
+            <!-- Graph Container -->
+            <div class="graph-container">
+                <canvas id="frictionGraph"></canvas>
+            </div>
+        </div>
+
+        <!-- Message Box -->
+        <div id="messageBox"></div>
+        
+        <!-- Controls Container at the bottom -->
+        <div class="controls-container flex flex-col items-center">
+            <label for="forceRange" class="mb-2 text-sm font-semibold">Applied Force</label>
+            <div class="range-container w-full">
+                <span class="text-xs">0 N</span>
+                <input type="range" id="forceRange" min="0" max="30" step="0.1" value="0">
+                <span class="text-xs">30 N</span>
+            </div>
+            <label for="fsMaxRange" class="mb-2 text-sm font-semibold">Max Static Friction</label>
+            <div class="range-container w-full">
+                <span class="text-xs">0 N</span>
+                <input type="range" id="fsMaxRange" min="0" max="30" step="0.1" value="20">
+                <span class="text-xs">30 N</span>
+            </div>
+            <label for="fkRange" class="mb-2 text-sm font-semibold">Kinetic Friction</label>
+            <div class="range-container w-full">
+                <span class="text-xs">0 N</span>
+                <input type="range" id="fkRange" min="0" max="30" step="0.1" value="15">
+                <span class="text-xs">30 N</span>
+            </div>
+            <button id="resetButton" class="reset-button mt-4">Reset Simulation</button>
+            <p class="mt-2 text-center text-xs text-gray-400">Drag the sliders to change force and friction. Click and drag the screen to rotate the view.</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        window.onload = function() {
+            // --- Three.js Simulation Setup ---
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000); // Fixed aspect ratio
+            const simulationCanvas = document.getElementById('simulationCanvas');
+            const renderer = new THREE.WebGLRenderer({ canvas: simulationCanvas, antialiasing: true, alpha: true });
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5).normalize();
+            scene.add(directionalLight);
+
+            const blockGeometry = new THREE.BoxGeometry(2, 1, 1);
+            const blockMaterial = new THREE.MeshPhongMaterial({ color: 0x4299e1, shininess: 50 });
+            const block = new THREE.Mesh(blockGeometry, blockMaterial);
+            block.position.y = 0.5; // Adjusted vertical position to be visible
+            scene.add(block);
+
+            const floorGeometry = new THREE.PlaneGeometry(20, 20);
+            const floorMaterial = new THREE.MeshPhongMaterial({ color: 0x2d3748, side: THREE.DoubleSide });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = Math.PI / 2;
+            floor.position.y = 0; // Adjusted vertical position to be visible
+            scene.add(floor);
+
+            const appliedForceDirection = new THREE.Vector3(1, 0, 0);
+            const appliedForceOrigin = new THREE.Vector3(block.position.x - 1, block.position.y, block.position.z);
+            let appliedForceArrow = new THREE.ArrowHelper(appliedForceDirection, appliedForceOrigin, 0, 0xff0000, 0.2, 0.1);
+            scene.add(appliedForceArrow);
+
+            let Fs_max = 20;
+            let Fk = 15;
+            
+            let appliedForce = 0;
+            let currentFriction = 0;
+            let isMoving = false;
+            let blockVelocity = 0;
+            let blockOriginalX = block.position.x;
+            const blockOriginalY = block.position.y; // Store original Y position
+
+            camera.position.z = 5;
+            camera.position.y = 3;
+            camera.lookAt(0, block.position.y, 0); // Camera looks at the new block position
+
+            // --- UI Elements ---
+            const appliedForceValueEl = document.getElementById('appliedForceValue');
+            const frictionForceValueEl = document.getElementById('frictionForceValue');
+            const statusTextEl = document.getElementById('statusText');
+            const messageBoxEl = document.getElementById('messageBox');
+            const fsMaxValueEl = document.getElementById('fsMaxValue');
+            const fkValueEl = document.getElementById('fkValue');
+            
+            const forceRange = document.getElementById('forceRange');
+            const fsMaxRange = document.getElementById('fsMaxRange');
+            const fkRange = document.getElementById('fkRange');
+            const resetButton = document.getElementById('resetButton');
+            
+            // --- Graph Drawing Setup ---
+            const graphCanvas = document.getElementById('frictionGraph');
+            const ctx = graphCanvas.getContext('2d');
+            const graphContainer = document.querySelector('.graph-container');
+            
+            let graphWidth, graphHeight;
+            const padding = 30;
+            let scaleX, scaleY;
+            let graphOffsetX = 0;
+
+            const updateGraphDimensions = () => {
+                graphWidth = graphContainer.clientWidth;
+                graphHeight = graphContainer.clientHeight;
+                graphCanvas.width = graphWidth;
+                graphCanvas.height = graphHeight;
+                scaleX = (graphWidth - 2 * padding) / 30;
+                scaleY = (graphHeight - 2 * padding) / 25;
+            };
+
+            const drawGraph = (currentAppliedForce, currentFrictionForce, fsMax, fk) => {
+                ctx.clearRect(0, 0, graphWidth, graphHeight);
+                
+                ctx.save();
+                ctx.translate(-graphOffsetX, 0);
+
+                // Draw axes
+                ctx.beginPath();
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, graphHeight - padding);
+                ctx.lineTo(graphWidth - padding, graphHeight - padding);
+                ctx.stroke();
+
+                // Draw labels (fixed position, so they don't slide)
+                ctx.restore();
+                ctx.save();
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '12px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('Applied Force (N)', graphWidth / 2, graphHeight - 5);
+                ctx.save();
+                ctx.translate(15, graphHeight / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('Frictional Force (N)', 0, 0);
+                ctx.restore();
+                ctx.restore();
+                
+                ctx.save();
+                ctx.translate(-graphOffsetX, 0);
+
+                // Draw static friction line
+                ctx.beginPath();
+                ctx.strokeStyle = '#68d391';
+                ctx.lineWidth = 2;
+                ctx.moveTo(padding, graphHeight - padding);
+                ctx.lineTo(padding + fsMax * scaleX, graphHeight - padding - fsMax * scaleY);
+                ctx.stroke();
+
+                // Draw kinetic friction line
+                ctx.beginPath();
+                ctx.strokeStyle = '#f6e05e';
+                ctx.moveTo(padding + fsMax * scaleX, graphHeight - padding - fk * scaleY);
+                ctx.lineTo(graphWidth - padding, graphHeight - padding - fk * scaleY);
+                ctx.stroke();
+
+                // Draw current point
+                const currentX = padding + currentAppliedForce * scaleX;
+                let currentY;
+
+                if (currentAppliedForce <= fsMax) {
+                    currentY = graphHeight - padding - currentAppliedForce * scaleY;
+                } else {
+                    currentY = graphHeight - padding - fk * scaleY;
+                }
+                
+                ctx.beginPath();
+                ctx.fillStyle = '#4299e1';
+                ctx.arc(currentX, currentY, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw limiting friction point
+                ctx.beginPath();
+                ctx.fillStyle = '#ff0000';
+                ctx.arc(padding + fsMax * scaleX, graphHeight - padding - fsMax * scaleY, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+
+            };
+
+            const resizeRendererToDisplaySize = () => {
+                const width = simulationCanvas.clientWidth;
+                const height = simulationCanvas.clientHeight;
+                const needResize = simulationCanvas.width !== width || simulationCanvas.height !== height;
+                if (needResize) {
+                    renderer.setSize(width, height, false);
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                }
+                return needResize;
+            };
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+
+                resizeRendererToDisplaySize();
+                updateGraphDimensions();
+
+                // Update forces and state
+                if (appliedForce > Fs_max) {
+                    isMoving = true;
+                    currentFriction = Fk;
+                    statusTextEl.textContent = 'Kinetic Friction';
+                    statusTextEl.style.color = '#f6e05e';
+                } else if (appliedForce > 0) {
+                    isMoving = false;
+                    currentFriction = appliedForce;
+                    statusTextEl.textContent = 'Static Friction';
+                    statusTextEl.style.color = '#68d391';
+                } else {
+                    isMoving = false;
+                    currentFriction = 0;
+                    statusTextEl.textContent = 'Static';
+                    statusTextEl.style.color = '#e2e8f0';
+                }
+                
+                // Update block position based on net force
+                const netForce = appliedForce - currentFriction;
+                if (isMoving) {
+                    blockVelocity += netForce * 0.001;
+                    block.position.x += blockVelocity * 0.01;
+                } else {
+                    blockVelocity = 0;
+                }
+                
+                // Update arrow
+                const arrowLength = appliedForce / 30;
+                appliedForceArrow.setLength(arrowLength * 4, 0.2, 0.1);
+
+                // Update UI values
+                appliedForceValueEl.textContent = appliedForce.toFixed(1);
+                frictionForceValueEl.textContent = currentFriction.toFixed(1);
+
+                // Update graph offset for sliding effect
+                const currentXOnCanvas = padding + appliedForce * scaleX;
+                const slideThreshold = graphWidth - padding - 50;
+                if (currentXOnCanvas > slideThreshold) {
+                    graphOffsetX = currentXOnCanvas - slideThreshold;
+                } else {
+                    graphOffsetX = 0;
+                }
+
+                drawGraph(appliedForce, currentFriction, Fs_max, Fk);
+                renderer.render(scene, camera);
+            };
+
+            // Add mouse/touch controls for camera
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            const toRadians = (degrees) => degrees * (Math.PI / 180);
+
+            const onMouseDown = (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY };
+            };
+            
+            const onMouseUp = () => {
+                isDragging = false;
+            };
+
+            const onMouseMove = (e) => {
+                if (!isDragging) return;
+
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+
+                const deltaX = clientX - previousMousePosition.x;
+                const deltaY = clientY - previousMousePosition.y;
+
+                const sensitivity = 0.005;
+                const horizontalAngle = -deltaX * sensitivity;
+                const verticalAngle = -deltaY * sensitivity;
+
+                const cameraDistance = camera.position.length();
+
+                const newPosition = new THREE.Vector3().copy(camera.position);
+
+                const horizontalRotationMatrix = new THREE.Matrix4().makeRotationY(horizontalAngle);
+                newPosition.applyMatrix4(horizontalRotationMatrix);
+
+                const crossProduct = new THREE.Vector3().copy(newPosition).cross(camera.up).normalize();
+                const verticalRotationMatrix = new THREE.Matrix4().makeRotationAxis(crossProduct, verticalAngle);
+                newPosition.applyMatrix4(verticalRotationMatrix);
+
+                camera.position.copy(newPosition.normalize().multiplyScalar(cameraDistance));
+                camera.lookAt(0, block.position.y, 0); // Always look at the block's current Y position
+
+                previousMousePosition = { x: clientX, y: clientY };
+            };
+
+            simulationCanvas.addEventListener('mousedown', onMouseDown);
+            simulationCanvas.addEventListener('mouseup', onMouseUp);
+            simulationCanvas.addEventListener('mousemove', onMouseMove);
+            simulationCanvas.addEventListener('touchstart', onMouseDown);
+            simulationCanvas.addEventListener('touchend', onMouseUp);
+            simulationCanvas.addEventListener('touchmove', onMouseMove);
+            
+            // Start the animation
+            animate();
+
+            // Add event listeners for sliders and reset button
+            forceRange.addEventListener('input', (e) => {
+                appliedForce = parseFloat(e.target.value);
+            });
+            fsMaxRange.addEventListener('input', (e) => {
+                Fs_max = parseFloat(e.target.value);
+                fsMaxValueEl.textContent = Fs_max.toFixed(1);
+            });
+            fkRange.addEventListener('input', (e) => {
+                Fk = parseFloat(e.target.value);
+                fkValueEl.textContent = Fk.toFixed(1);
+            });
+            resetButton.addEventListener('click', () => {
+                appliedForce = 0;
+                block.position.x = blockOriginalX;
+                block.position.y = blockOriginalY;
+                blockVelocity = 0;
+                forceRange.value = 0;
+            });
+        };
+    </script>
+</body>
+</html>

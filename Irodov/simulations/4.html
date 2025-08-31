@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Graph Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12 lg:p-20 flex flex-col items-center min-h-screen">
+
+    <div class="max-w-4xl w-full bg-white rounded-xl shadow-lg p-6 md:p-10 lg:p-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-6">Physics Graph Analyzer</h1>
+        <p class="text-center text-gray-600 mb-8">An interactive explanation of the rectilinear motion graph.</p>
+
+        <!-- Problem Section -->
+        <div id="problem-section" class="bg-gray-50 rounded-xl shadow-inner p-6 mb-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Problem Statement</h3>
+            <p class="text-gray-700 leading-relaxed mb-4">
+                The graph below represents the rectilinear motion of an object. The distance, $s$, is plotted on the y-axis, and time, $t$, is plotted on the x-axis. Using the graph, answer the following questions. 
+            </p>
+            <ol class="list-decimal list-inside text-gray-700 space-y-2">
+                <li>What is the average velocity of the object?</li>
+                <li>What is the maximum instantaneous velocity of the object?</li>
+                <li>At what time, $t_0$, is the instantaneous velocity of the object equal to the average velocity of the object?</li>
+            </ol>
+        </div>
+
+        <!-- Interactive Graph Section -->
+        <div class="flex flex-col items-center mb-10">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800 text-center">Interactive Graph: Distance (s) vs Time (t)</h2>
+            <div class="w-full relative bg-white rounded-lg shadow-md border border-gray-200" style="padding-bottom: 75%;">
+                <canvas id="graphCanvas" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+            
+            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mt-8 w-full justify-center">
+                <button id="avgVelocityBtn" class="px-6 py-3 rounded-full bg-green-500 text-white font-medium shadow-md hover:bg-green-600 transition-colors">Show Average Velocity</button>
+                <div class="flex items-center space-x-2">
+                    <input type="range" id="t0Slider" min="0" max="20" value="0" step="0.1" class="w-full">
+                    <span id="t0Value" class="text-lg font-bold w-12 text-center">0.0s</span>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <p id="instantaneousVelocity" class="text-lg font-medium text-gray-700">Instantaneous Velocity at selected time: <span class="font-bold text-blue-600">0.00 m/s</span></p>
+                <p id="avgAtT0" class="text-lg font-medium text-gray-700">Average Velocity to selected time: <span class="font-bold text-blue-600">0.00 m/s</span></p>
+            </div>
+        </div>
+
+        <!-- Solutions Section -->
+        <div class="solution-section space-y-8">
+            
+            <!-- Part (a) -->
+            <div id="solution-a" class="bg-gray-50 rounded-xl shadow-inner p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Part (a): Average Velocity</h3>
+                <p class="text-gray-700 leading-relaxed">The average velocity is the total distance traveled divided by the total time of motion. Use the "Show Average Velocity" button to see this represented by a line from the start to the end of the motion.</p>
+                <div class="mt-4 p-4 bg-gray-100 rounded-lg shadow-inner text-gray-900 text-lg text-center">
+                    $$\text{Average Velocity} = \frac{2.0 \text{ m}}{20 \text{ s}} = 0.1 \text{ m/s}$$
+                </div>
+            </div>
+
+            <!-- Part (b) -->
+            <div id="solution-b" class="bg-gray-50 rounded-xl shadow-inner p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Part (b): Maximum Velocity</h3>
+                <p class="text-gray-700 leading-relaxed">Maximum velocity occurs where the graph's slope is the steepest. Drag the slider to find the point where the instantaneous velocity value is at its highest. This occurs around <span class="font-bold">12.5 s</span>.</p>
+                <div class="mt-4 p-4 bg-gray-100 rounded-lg shadow-inner text-gray-900 text-lg text-center">
+                    $$\text{Maximum Velocity} \approx 0.25 \text{ m/s}$$
+                </div>
+            </div>
+
+            <!-- Part (c) -->
+            <div id="solution-c" class="bg-gray-50 rounded-xl shadow-inner p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Part (c): Time Moment $t_0$</h3>
+                <p class="text-gray-700 leading-relaxed">The time $t_0$ is when the instantaneous velocity is equal to the average velocity from the start. Drag the slider to find the time when the two displayed velocity values are equal. This occurs around <span class="font-bold">16 s</span>.</p>
+                <div class="mt-4 p-4 bg-gray-100 rounded-lg shadow-inner text-gray-900 text-lg text-center">
+                    $$\text{By matching the velocities, we find } t_0 \approx 16 \text{ s.}$$
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const avgVelocityBtn = document.getElementById('avgVelocityBtn');
+        const t0Slider = document.getElementById('t0Slider');
+        const t0ValueSpan = document.getElementById('t0Value');
+        const instantaneousVelocitySpan = document.getElementById('instantaneousVelocity').querySelector('span');
+        const avgAtT0Span = document.getElementById('avgAtT0').querySelector('span');
+
+        let showAvgLine = false;
+
+        // Function to fit the canvas to its container
+        const resizeCanvas = () => {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            drawGraph();
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', resizeCanvas);
+
+        // Function that defines the motion (approximates the original graph)
+        const s = (t) => {
+            if (t <= 12.5) {
+                // Mimic acceleration phase with a quadratic
+                return 0.00988 * t * t + 0.003 * t; 
+            } else {
+                // Mimic deceleration phase with a cubic function
+                const T_max = 20;
+                const S_max = 2.0;
+                const s12_5 = 0.00988 * 12.5 * 12.5 + 0.003 * 12.5;
+                const a = (S_max - s12_5) / ((T_max - 12.5) * (T_max - 12.5));
+                return s12_5 + a * (T_max - 12.5) * (T_max - 12.5) - a * (T_max - t) * (T_max - t);
+            }
+        };
+
+        // Derivative of the s(t) function to get instantaneous velocity
+        const ds_dt = (t) => {
+            if (t <= 12.5) {
+                return 2 * 0.00988 * t + 0.003;
+            } else {
+                const T_max = 20;
+                const S_max = 2.0;
+                const s12_5 = 0.00988 * 12.5 * 12.5 + 0.003 * 12.5;
+                const a = (S_max - s12_5) / ((T_max - 12.5) * (T_max - 12.5));
+                return 2 * a * (T_max - t);
+            }
+        };
+
+        const drawGraph = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const padding = 50;
+            const xMax = 20;
+            const yMax = 2.0;
+            const xScale = (canvas.width - 2 * padding) / xMax;
+            const yScale = (canvas.height - 2 * padding) / yMax;
+
+            // Draw axes
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.strokeStyle = '#4b5563';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw axis labels
+            ctx.font = '14px Inter';
+            ctx.fillStyle = '#4b5563';
+            ctx.textAlign = 'center';
+            ctx.fillText('Time (t)', canvas.width / 2, canvas.height - 15);
+            ctx.save();
+            ctx.translate(20, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Distance (s)', 0, 0);
+            ctx.restore();
+
+            // Draw axis ticks and labels
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 2.0; i += 0.5) {
+                const y = canvas.height - padding - i * yScale;
+                ctx.fillText(i.toFixed(1) + ' m', padding - 5, y + 4);
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(padding - 3, y);
+                ctx.stroke();
+            }
+
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 20; i += 5) {
+                const x = padding + i * xScale;
+                ctx.fillText(i + ' s', x, canvas.height - padding + 20);
+                ctx.beginPath();
+                ctx.moveTo(x, canvas.height - padding);
+                ctx.lineTo(x, canvas.height - padding + 3);
+                ctx.stroke();
+            }
+
+            // Draw the graph line
+            ctx.beginPath();
+            ctx.moveTo(padding, canvas.height - padding);
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            for (let t = 0; t <= xMax; t += 0.1) {
+                const x = padding + t * xScale;
+                const y = canvas.height - padding - s(t) * yScale;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Draw average velocity line (part a)
+            if (showAvgLine) {
+                ctx.beginPath();
+                ctx.moveTo(padding, canvas.height - padding);
+                ctx.lineTo(padding + xMax * xScale, canvas.height - padding - s(xMax) * yScale);
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Draw instantaneous velocity and average velocity at t0 (part c)
+            const t0 = parseFloat(t0Slider.value);
+            const t0X = padding + t0 * xScale;
+            const t0Y = canvas.height - padding - s(t0) * yScale;
+
+            // Draw the point at t0
+            ctx.beginPath();
+            ctx.arc(t0X, t0Y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+
+            // Draw average velocity line to t0
+            ctx.beginPath();
+            ctx.moveTo(padding, canvas.height - padding);
+            ctx.lineTo(t0X, t0Y);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw tangent line at t0
+            const slope = ds_dt(t0);
+            const tangentLength = 20;
+            const dx = Math.cos(Math.atan(slope * yScale / xScale)) * tangentLength;
+            const dy = Math.sin(Math.atan(slope * yScale / xScale)) * tangentLength;
+            ctx.beginPath();
+            ctx.moveTo(t0X - dx, t0Y + dy);
+            ctx.lineTo(t0X + dx, t0Y - dy);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        };
+
+        avgVelocityBtn.addEventListener('click', () => {
+            showAvgLine = !showAvgLine;
+            drawGraph();
+        });
+
+        t0Slider.addEventListener('input', () => {
+            const t0 = parseFloat(t0Slider.value);
+            t0ValueSpan.textContent = `${t0.toFixed(1)}s`;
+            const instantaneousV = ds_dt(t0);
+            instantaneousVelocitySpan.textContent = `${instantaneousV.toFixed(2)} m/s`;
+
+            const avgAtT0 = t0 > 0 ? s(t0) / t0 : 0;
+            avgAtT0Span.textContent = `${avgAtT0.toFixed(2)} m/s`;
+            
+            drawGraph();
+        });
+
+    </script>
+    <!-- MathJax script to render LaTeX equations -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']]
+        },
+        svg: {
+          fontCache: 'global'
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</body>
+</html>

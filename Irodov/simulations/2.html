@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mean Velocity Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+        }
+        canvas {
+            background-color: #f0fdf4;
+            border-radius: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+            border: 2px solid #d1fae5;
+            margin-top: 1rem;
+            width: 100%;
+            height: 100px;
+        }
+        .point {
+            position: absolute;
+            background-color: #ef4444;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 8px #ef4444;
+        }
+        button {
+            background-color: #22c55e;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background-color: #16a34a;
+            transform: translateY(-2px);
+        }
+        .info-box {
+            background-color: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        .info-box h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        .final-result {
+            background-color: #d1fae5;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-top: 1rem;
+            font-weight: bold;
+            color: #14532d;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 flex flex-col items-center">
+
+    <div class="container space-y-4">
+        <h1 class="text-3xl font-bold text-green-700">Mean Velocity Simulation</h1>
+
+        <div class="info-box">
+            <h3>Problem Statement</h3>
+            <p>
+                A point traversed half the total distance with a velocity $V_1$. The remaining half of the distance was covered with velocity $V_2$ for half the time and with velocity $V_3$ for the other half of the time. Find the mean velocity of the point averaged over the whole time of motion.
+            </p>
+        </div>
+
+        <button onclick="startSimulation()">Start Simulation</button>
+
+        <div id="status" class="text-lg font-semibold text-gray-700 mt-4">
+            Click 'Start Simulation' to begin.
+        </div>
+
+        <div style="position: relative; height: 100px;">
+            <canvas id="simulationCanvas"></canvas>
+            <div id="point" class="point"></div>
+        </div>
+        
+        <div id="result" class="final-result hidden"></div>
+
+        <div class="info-box">
+            <h3>The Physics Behind the Solution</h3>
+            <p>
+                To find the mean velocity, we need to calculate the total distance traveled and the total time taken. Let the total distance be $S$.
+            </p>
+            <p>
+                The total time is the sum of the time for the first half of the distance ($t_1$) and the time for the second half of the distance ($t_2$).
+            </p>
+            <p>
+                For the first half, the time is:
+                $$t_1 = \frac{S/2}{V_1}$$
+            </p>
+            <p>
+                For the second half, the distance covered is the sum of the distances for the two equal time intervals:
+                $$\frac{S}{2} = V_2\frac{t_2}{2} + V_3\frac{t_2}{2} = \frac{t_2}{2}(V_2 + V_3)$$
+                Solving for $t_2$, we get:
+                $$t_2 = \frac{S}{V_2 + V_3}$$
+            </p>
+            <p>
+                The total time is therefore:
+                $$T_{\text{total}} = t_1 + t_2 = \frac{S}{2V_1} + \frac{S}{V_2 + V_3}$$
+            </p>
+            <p>
+                The mean velocity is the total distance over the total time:
+                $$\bar{V} = \frac{S}{T_{\text{total}}} = \frac{S}{\frac{S}{2V_1} + \frac{S}{V_2 + V_3}}$$
+            </p>
+            <p>
+                By simplifying the expression, we arrive at the final formula:
+                $$\bar{V} = \frac{2V_1(V_2 + V_3)}{2V_1 + V_2 + V_3}$$
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const pointEl = document.getElementById('point');
+        const statusEl = document.getElementById('status');
+        const resultEl = document.getElementById('result');
+        let animationFrameId;
+        let lastTime;
+
+        // Problem parameters for simulation (arbitrary values to demonstrate)
+        const v1 = 20; // km/h
+        const v2 = 10; // km/h
+        const v3 = 30; // km/h
+        const totalDistance = 100; // km
+
+        // Calculate theoretical times
+        const t1 = (totalDistance / 2) / v1;
+        const t2 = (totalDistance / 2) / ((v2 + v3) / 2);
+        const totalTime = t1 + t2;
+        
+        // Simulation state
+        let currentTime = 0;
+        let currentPos = 0;
+        let scale; // px per km
+        let isSimulating = false;
+
+        function setupCanvas() {
+            canvas.width = canvas.parentElement.offsetWidth;
+            scale = canvas.width / (totalDistance * 1.1); // Add margin
+            resetSimulation();
+        }
+
+        function resetSimulation() {
+            currentTime = 0;
+            currentPos = 0;
+            isSimulating = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            pointEl.style.left = '0px';
+            statusEl.textContent = "Click 'Start Simulation' to begin.";
+            resultEl.classList.add('hidden');
+        }
+
+        function drawPath() {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw half-distance marker
+            const halfDistanceX = (totalDistance / 2) * scale;
+            ctx.beginPath();
+            ctx.moveTo(halfDistanceX, 0);
+            ctx.lineTo(halfDistanceX, canvas.height);
+            ctx.strokeStyle = '#9ca3af';
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#6b7280';
+            ctx.fillText('Halfway Point', halfDistanceX - 30, 15);
+        }
+
+        function animate(timestamp) {
+            if (!isSimulating) return;
+
+            if (lastTime === undefined) {
+                lastTime = timestamp;
+            }
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+            currentTime += deltaTime;
+
+            let currentVelocity;
+            if (currentPos < totalDistance / 2) {
+                // Phase 1: First half of the distance
+                currentVelocity = v1;
+                statusEl.textContent = `Phase 1: Traversing first half of the distance with velocity V1 = ${v1} km/h.`;
+            } else {
+                // Phase 2: Remaining half of the distance
+                const timeInPhase2 = currentTime - t1;
+                if (timeInPhase2 < t2 / 2) {
+                    currentVelocity = v2;
+                    statusEl.textContent = `Phase 2: Traversing second half with velocity V2 = ${v2} km/h.`;
+                } else {
+                    currentVelocity = v3;
+                    statusEl.textContent = `Phase 2: Traversing second half with velocity V3 = ${v3} km/h.`;
+                }
+            }
+
+            currentPos += currentVelocity * deltaTime;
+
+            if (currentPos >= totalDistance) {
+                currentPos = totalDistance;
+                isSimulating = false;
+                statusEl.textContent = 'Simulation Complete!';
+                displayResult();
+                return;
+            }
+
+            // Update point position
+            pointEl.style.left = (currentPos * scale) + 'px';
+
+            drawPath();
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function displayResult() {
+            const meanVelocity = (2 * v1 * (v2 + v3)) / (2 * v1 + v2 + v3);
+            resultEl.innerHTML = `Mean Velocity: ${meanVelocity.toFixed(2)} km/h`;
+            resultEl.classList.remove('hidden');
+        }
+
+        function startSimulation() {
+            resetSimulation();
+            isSimulating = true;
+            lastTime = performance.now();
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        window.onload = setupCanvas;
+        window.addEventListener('resize', setupCanvas);
+    </script>
+</body>
+</html>

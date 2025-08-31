@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motorboat and Raft Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        canvas {
+            background-color: #a3e635; /* A more vibrant river color */
+            background-image: linear-gradient(90deg, #dcfce7 1px, transparent 1px), linear-gradient(90deg, #dcfce7 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: riverFlow 10s linear infinite;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 2px solid #60a5fa;
+            width: 100%;
+            height: 200px;
+        }
+        @keyframes riverFlow {
+            from { background-position: 0 0; }
+            to { background-position: 50px 0; }
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .boat-img, .raft-img {
+            position: absolute;
+            height: 40px; /* Adjust size as needed */
+            transition: transform 0.2s ease-out;
+        }
+        .boat-img {
+            top: 75px;
+            animation: boatBob 2s ease-in-out infinite;
+        }
+        .raft-img {
+            top: 110px;
+            animation: raftBob 3s ease-in-out infinite;
+        }
+        @keyframes boatBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        @keyframes raftBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .result-box {
+            background-color: #d1fae5;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-top: 1rem;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .content-box {
+            background-color: #f9fafb;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        .content-box h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 flex flex-col items-center">
+
+    <div class="container space-y-4">
+        <h1 class="text-3xl font-bold text-sky-800">Motorboat and Raft Simulation</h1>
+        
+        <div class="content-box">
+            <h3>Problem Description</h3>
+            <p>
+                A motorboat going downstream overcame a raft at a point A. Exactly $t = 60$ minutes later, the boat turned back and after some time passed the raft again at a distance $l = 6.0$ km from the point A. Assuming the boat's engine power is constant, find the flow velocity of the river.
+            </p>
+        </div>
+
+        <button onclick="startSimulation()">Start Simulation</button>
+
+        <div id="status" class="text-lg font-semibold text-gray-700 mt-4">
+            Click 'Start Simulation' to begin.
+        </div>
+        
+        <div style="position: relative; width: 100%; height: 200px;">
+            <canvas id="riverCanvas"></canvas>
+            <img id="boat" src="https://placehold.co/100x40/0077c2/ffffff?text=BOAT" alt="Motorboat" class="boat-img" style="left: 10px;">
+            <img id="raft" src="https://placehold.co/60x30/8b4513/ffffff?text=RAFT" alt="Raft" class="raft-img" style="left: 10px;">
+        </div>
+
+        <div id="result" class="text-xl font-bold text-emerald-600 mt-2"></div>
+
+        <div class="content-box">
+            <h3>The Physics Behind the Solution</h3>
+            <p>
+                The key to solving this problem lies in understanding relative motion. From the perspective of the raft, the river is stationary and the raft itself is not moving. The boat travels away from the raft and then returns.
+            </p>
+            <p>
+                The boat's journey can be split into two parts relative to the water: the initial downstream trip and the return trip. Since the engine power is constant, the boat's speed relative to the water ($v_{boat}$) is the same in both directions. The river's flow velocity ($v_{flow}$) acts on both the boat and the raft.
+            </p>
+            <p>
+                When the boat and raft meet for the second time, the raft has traveled a distance of $l$. The total time taken for this to happen is the sum of the time the boat traveled downstream ($t_1$) and the time it took to return ($t_2$). The total time the raft was in motion is $T = t_1 + t_2$.
+            </p>
+            <p>
+                The distance the raft traveled is simply:
+                $$l = v_{flow} \times T$$
+            </p>
+            <p>
+                A fascinating aspect of this problem is that the boat's speed relative to the water, $v_{boat}$, cancels out. The problem simplifies to a relationship between the flow velocity, the distance, and the time the boat spent traveling downstream before turning back. The final solution is given by:
+            </p>
+            <p class="font-bold text-center text-sky-700 text-2xl mt-4">
+                $$v_{flow} = \frac{l}{2t_1}$$
+            </p>
+            <p class="mt-4">
+                With $l = 6.0$ km and $t_1 = 60$ min $= 1.0$ hour, the calculation is straightforward:
+                $$v_{flow} = \frac{6.0\text{ km}}{2 \times 1.0\text{ hr}} = 3.0\text{ km/h}$$
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const canvas = document.getElementById('riverCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusEl = document.getElementById('status');
+        const resultEl = document.getElementById('result');
+        const boatImg = document.getElementById('boat');
+        const raftImg = document.getElementById('raft');
+
+        // Simulation variables
+        let animationFrameId = null;
+        const t1_minutes = 60; // Time in minutes the boat traveled downstream before turning back
+        const l_km = 6.0;      // Distance in km from point A where the boat and raft meet again
+        const vb_still_water = 10; // Placeholder boat speed in still water (arbitrary for simulation)
+
+        const t1_hours = t1_minutes / 60;
+        const flowVelocity_kmph = l_km / (2 * t1_hours);
+
+        let scale; // Pixels per kilometer for visualization
+        let time = 0;
+        let boatPos = 0;
+        let raftPos = 0;
+        let boatDirection = 1;
+        let simulationState = 'downstream';
+        let simulationFinished = false;
+        
+        // Function to set canvas dimensions and scale
+        function setupCanvas() {
+            canvas.width = canvas.parentElement.offsetWidth;
+            scale = (canvas.width - 20) / (l_km * 2.5); // Dynamic scaling
+            drawStatic();
+        }
+
+        // Draw the static elements on the canvas
+        function drawStatic() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Draw Point A (Start)
+            ctx.fillStyle = '#1f2937';
+            ctx.beginPath();
+            ctx.arc(10, canvas.height / 2, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '14px Inter';
+            ctx.fillText('Point A', 15, (canvas.height / 2) - 15);
+
+            // Draw the Meeting Point
+            const meetPointX = l_km * scale + 10;
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(meetPointX, canvas.height / 2, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '14px Inter';
+            ctx.fillText('Meeting Point', meetPointX - 25, (canvas.height / 2) - 15);
+        }
+
+        function updatePositions(deltaTime) {
+            // Update boat and raft positions based on simulation state
+            if (simulationState === 'downstream') {
+                boatPos += (vb_still_water + flowVelocity_kmph) * deltaTime;
+                raftPos += flowVelocity_kmph * deltaTime;
+
+                if (time >= t1_hours) {
+                    simulationState = 'upstream';
+                    boatDirection = -1;
+                    statusEl.textContent = 'Motorboat has turned back...';
+                }
+            } else if (simulationState === 'upstream') {
+                boatPos += (vb_still_water - flowVelocity_kmph) * boatDirection * deltaTime;
+                raftPos += flowVelocity_kmph * deltaTime;
+
+                // Check for meeting point
+                if (boatPos <= raftPos) {
+                    simulationFinished = true;
+                    statusEl.textContent = 'Raft and motorboat have met!';
+                    resultEl.innerHTML = `
+                        <div class="result-box">
+                            <span class="text-gray-800">The calculated flow velocity is:</span>
+                            <span class="text-sky-700 font-bold">${flowVelocity_kmph.toFixed(2)} km/h</span>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Animation Loop
+        let lastTime = 0;
+        function animate(timestamp) {
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (!simulationFinished) {
+                time += deltaTime;
+                updatePositions(deltaTime);
+                drawStatic();
+
+                // Update image positions
+                boatImg.style.left = (boatPos * scale + 10) + 'px';
+                raftImg.style.left = (raftPos * scale + 10) + 'px';
+
+                // Flip the boat image when it turns around
+                boatImg.style.transform = `translateY(0) scaleX(${boatDirection})`;
+
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+        
+        // Main function to start the simulation
+        function startSimulation() {
+            // Cancel any previous animation frame
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+
+            // Reset simulation variables
+            time = 0;
+            boatPos = 0;
+            raftPos = 0;
+            boatDirection = 1;
+            simulationState = 'downstream';
+            simulationFinished = false;
+
+            // Update status and result displays
+            statusEl.textContent = 'Simulation in progress...';
+            resultEl.textContent = '';
+
+            // Start the animation loop
+            lastTime = performance.now();
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Initial setup and animation start
+        window.onload = function() {
+            setupCanvas();
+        };
+        
+        // Handle window resize
+        window.addEventListener('resize', setupCanvas);
+    </script>
+</body>
+</html>

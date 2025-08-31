@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinematics Problem Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            startup: {
+                ready: function () {
+                    MathJax.startup.defaultReady();
+                    // Render equations after the document is fully loaded
+                    document.addEventListener('DOMContentLoaded', () => {
+                        MathJax.typesetPromise();
+                    });
+                }
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+        }
+        .section-header {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .info-box {
+            background-color: #e5e7eb;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        .info-box h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        .car-track {
+            position: relative;
+            width: 100%;
+            height: 50px;
+            background-color: #4b5563;
+            border-radius: 0.5rem;
+            margin: 2rem auto;
+            overflow: hidden;
+        }
+        .car {
+            position: absolute;
+            width: 40px;
+            height: 20px;
+            background-color: #ef4444;
+            border-radius: 0.25rem;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            transition: all 0.1s linear;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .car-icon {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background-color: #1e40af;
+            transform: translateY(-2px);
+        }
+        .result-box {
+            background-color: #d1fae5;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-top: 1rem;
+            font-weight: bold;
+            color: #065f46;
+            font-size: 1.25rem;
+            text-align: left;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 flex flex-col items-center">
+
+    <div class="container space-y-6">
+        <h1 class="text-4xl font-extrabold text-blue-700">Car Kinematics Simulation</h1>
+
+        <div class="info-box">
+            <h2 class="section-header">Problem Statement</h2>
+            <p>
+                A car starts moving rectilinearly, first with acceleration $w = 5.0 \text{ m/s}^2$ (the initial velocity is equal to zero), then uniformly, and finally, decelerating at the same rate $w$, comes to a stop. The total time of motion equals $t = 25 \text{ s}$. The average velocity during that time is equal to $\bar{v} = 72 \text{ km/h}$. How long does the car move uniformly?
+            </p>
+        </div>
+
+        <button onclick="startSimulation()">Start Simulation</button>
+
+        <div class="car-track">
+            <div id="car" class="car"></div>
+        </div>
+
+        <div id="status" class="text-lg font-semibold text-gray-700 mt-4">
+            Click 'Start Simulation' to begin.
+        </div>
+        
+        <div class="info-box mt-6">
+            <h2 class="section-header">Velocity-Time Graph</h2>
+            <canvas id="graphCanvas" class="w-full h-80"></canvas>
+        </div>
+
+        <hr class="w-full h-1 bg-gray-300 border-0 rounded-full my-6">
+
+        <div class="info-box">
+            <h2 class="section-header">Detailed Solution</h2>
+
+            <h3 class="font-bold text-lg mt-4">Step 1: Unit Conversion</h3>
+            <p>
+                First, we convert the average velocity from km/h to m/s:
+            </p>
+            $$
+            \bar{v} = 72 \frac{\text{km}}{\text{h}} \times \frac{1000 \text{ m}}{1 \text{ km}} \times \frac{1 \text{ h}}{3600 \text{ s}} = 20 \text{ m/s}
+            $$
+
+            <h3 class="font-bold text-lg mt-4">Step 2: Conceptual Approach</h3>
+            <p>
+                The motion has three phases: acceleration, uniform motion, and deceleration. Since the acceleration and deceleration rates are the same and the initial/final velocities are symmetric, the time for acceleration ($t_1$) must equal the time for deceleration ($t_3$). The total time is:
+            </p>
+            $$
+            t_{\text{total}} = t_1 + t_2 + t_3 = 2t_1 + t_2 = 25 \text{ s}
+            $$
+
+            <h3 class="font-bold text-lg mt-4">Step 3: Deriving the Equations</h3>
+            <p>
+                The maximum velocity ($v_{\text{max}}$) is reached at the end of the acceleration phase:
+            </p>
+            $$
+            v_{\text{max}} = w t_1
+            $$
+            <p>
+                The total distance ($D_{\text{total}}$) is the sum of the distances from each phase:
+            </p>
+            $$
+            D_{\text{total}} = d_1 + d_2 + d_3 = \frac{1}{2} w t_1^2 + (w t_1)t_2 + \frac{1}{2} w t_1^2 = w t_1(t_1 + t_2)
+            $$
+            <p>
+                Using the average velocity formula, we get:
+            </p>
+            $$
+            \bar{v} = \frac{D_{\text{total}}}{t_{\text{total}}} = \frac{w t_1 (t_1 + t_2)}{25}
+            $$
+            <p>
+                Substituting the known values and simplifying leads to:
+            </p>
+            $$
+            100 = t_1 (t_1 + t_2)
+            $$
+
+            <h3 class="font-bold text-lg mt-4">Step 4: Solving for the Unknown Time</h3>
+            <p>
+                We have a system of two equations:
+            </p>
+            <ol>
+                <li>$2t_1 + t_2 = 25$</li>
+                <li>$t_1(t_1 + t_2) = 100$</li>
+            </ol>
+            <p>
+                Solving this system yields a quadratic equation:
+            </p>
+            $$
+            t_1^2 - 25t_1 + 100 = 0
+            $$
+            <p>
+                The two solutions for $t_1$ are 20 s and 5 s. Only $t_1 = 5 \text{ s}$ is a physically valid solution. Substituting this back into the first equation:
+            </p>
+            $$
+            2(5) + t_2 = 25 \implies 10 + t_2 = 25 \implies t_2 = 15 \text{ s}
+            $$
+        </div>
+
+        <div class="result-box">
+            The time the car moves uniformly is <span class="text-blue-700 font-bold">15 s</span>.
+        </div>
+    </div>
+
+    <script>
+        const carEl = document.getElementById('car');
+        const statusEl = document.getElementById('status');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+        const totalDistance = 500; // Calculated from D_total = v_avg * t_total = 20 * 25 = 500m
+        const w = 5.0; // m/s^2
+        const t1 = 5; // s
+        const t2 = 15; // s
+        const t3 = 5; // s (t1 = t3)
+        const vMax = w * t1; // 25 m/s
+        const totalTime = t1 + t2 + t3;
+
+        let currentTime = 0;
+        let lastTime;
+        let animationFrameId;
+
+        // Position calculations
+        const d1 = 0.5 * w * Math.pow(t1, 2); // 62.5 m
+        const d2 = vMax * t2; // 375 m
+        const d3 = 0.5 * w * Math.pow(t3, 2); // 62.5 m
+
+        const phase1Duration = t1;
+        const phase2Duration = t2;
+        const phase3Duration = t3;
+
+        function getPosition(time) {
+            if (time <= phase1Duration) {
+                // Phase 1: Acceleration from rest
+                return 0.5 * w * Math.pow(time, 2);
+            } else if (time <= phase1Duration + phase2Duration) {
+                // Phase 2: Uniform motion
+                const timeInPhase2 = time - phase1Duration;
+                return d1 + vMax * timeInPhase2;
+            } else {
+                // Phase 3: Deceleration
+                const timeInPhase3 = time - (phase1Duration + phase2Duration);
+                return d1 + d2 + (vMax * timeInPhase3 - 0.5 * w * Math.pow(timeInPhase3, 2));
+            }
+        }
+
+        function getVelocity(time) {
+            if (time <= phase1Duration) {
+                return w * time;
+            } else if (time <= phase1Duration + phase2Duration) {
+                return vMax;
+            } else {
+                const timeInPhase3 = time - (phase1Duration + phase2Duration);
+                return vMax - w * timeInPhase3;
+            }
+        }
+
+        function animate(timestamp) {
+            if (!lastTime) {
+                lastTime = timestamp;
+            }
+            const deltaTime = (timestamp - lastTime) / 1000;
+            currentTime += deltaTime;
+
+            let currentPos = getPosition(currentTime);
+            if (currentPos > totalDistance) {
+                currentPos = totalDistance;
+            }
+
+            const progress = (currentPos / totalDistance) * 100;
+            carEl.style.left = `calc(${progress}% - 20px)`;
+
+            if (currentTime <= phase1Duration) {
+                statusEl.textContent = `Phase 1: Accelerating (Time: ${currentTime.toFixed(2)}s, Velocity: ${getVelocity(currentTime).toFixed(2)} m/s)`;
+            } else if (currentTime <= phase1Duration + phase2Duration) {
+                statusEl.textContent = `Phase 2: Uniform Motion (Time: ${currentTime.toFixed(2)}s, Velocity: ${vMax.toFixed(2)} m/s)`;
+            } else if (currentTime <= totalTime) {
+                const finalVelocity = getVelocity(currentTime);
+                statusEl.textContent = `Phase 3: Decelerating (Time: ${currentTime.toFixed(2)}s, Velocity: ${Math.max(0, finalVelocity).toFixed(2)} m/s)`;
+            }
+
+            drawAnimatedGraph(currentTime);
+
+            if (currentTime >= totalTime) {
+                cancelAnimationFrame(animationFrameId);
+                statusEl.textContent = `Simulation Complete! Total Time: ${totalTime}s`;
+                return;
+            }
+
+            lastTime = timestamp;
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function startSimulation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            carEl.style.left = '0px';
+            currentTime = 0;
+            lastTime = undefined;
+            animationFrameId = requestAnimationFrame(animate);
+        }
+        
+        function drawAnimatedGraph(time) {
+            const width = graphCanvas.offsetWidth;
+            const height = graphCanvas.offsetHeight;
+            graphCanvas.width = width;
+            graphCanvas.height = height;
+            const padding = 40;
+            const xMax = totalTime;
+            const yMax = vMax;
+            const scaleX = (width - 2 * padding) / xMax;
+            const scaleY = (height - 2 * padding) / yMax;
+
+            graphCtx.clearRect(0, 0, width, height);
+
+            // Draw axes
+            graphCtx.beginPath();
+            graphCtx.strokeStyle = '#6b7280';
+            graphCtx.lineWidth = 2;
+            graphCtx.moveTo(padding, padding);
+            graphCtx.lineTo(padding, height - padding);
+            graphCtx.lineTo(width - padding, height - padding);
+            graphCtx.stroke();
+
+            // Draw labels
+            graphCtx.fillStyle = '#1f2937';
+            graphCtx.font = '12px Inter';
+            graphCtx.textAlign = 'center';
+            graphCtx.fillText('Time (s)', width / 2, height - 10);
+            graphCtx.save();
+            graphCtx.translate(10, height / 2);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText('Velocity (m/s)', 0, 0);
+            graphCtx.restore();
+
+            // Draw ticks and values
+            // Y-axis
+            graphCtx.textAlign = 'right';
+            graphCtx.fillText('0', padding - 5, height - padding + 5);
+            graphCtx.fillText(yMax.toFixed(0), padding - 5, padding + 5);
+            // X-axis
+            graphCtx.textAlign = 'center';
+            graphCtx.fillText(t1.toFixed(0), padding + t1 * scaleX, height - padding + 15);
+            graphCtx.fillText((t1 + t2).toFixed(0), padding + (t1 + t2) * scaleX, height - padding + 15);
+            graphCtx.fillText(totalTime.toFixed(0), padding + totalTime * scaleX, height - padding + 15);
+
+            // Draw the full graph as a faded background
+            graphCtx.beginPath();
+            graphCtx.strokeStyle = '#d1d5db';
+            graphCtx.lineWidth = 2;
+            graphCtx.moveTo(padding, height - padding);
+            graphCtx.lineTo(padding + t1 * scaleX, height - padding - vMax * scaleY);
+            graphCtx.lineTo(padding + (t1 + t2) * scaleX, height - padding - vMax * scaleY);
+            graphCtx.lineTo(padding + totalTime * scaleX, height - padding);
+            graphCtx.stroke();
+
+            // Draw the animated portion
+            graphCtx.beginPath();
+            graphCtx.strokeStyle = '#ef4444';
+            graphCtx.lineWidth = 3;
+
+            let x1, y1;
+            let currentVelocity = getVelocity(time);
+            
+            // Phase 1: Acceleration
+            if (time <= t1) {
+                x1 = padding + time * scaleX;
+                y1 = height - padding - currentVelocity * scaleY;
+                graphCtx.moveTo(padding, height - padding);
+                graphCtx.lineTo(x1, y1);
+            }
+            // Phase 2: Uniform motion
+            else if (time <= t1 + t2) {
+                x1 = padding + t1 * scaleX;
+                y1 = height - padding - vMax * scaleY;
+                graphCtx.moveTo(padding, height - padding);
+                graphCtx.lineTo(x1, y1);
+                graphCtx.lineTo(padding + time * scaleX, y1);
+            }
+            // Phase 3: Deceleration
+            else {
+                x1 = padding + t1 * scaleX;
+                y1 = height - padding - vMax * scaleY;
+                graphCtx.moveTo(padding, height - padding);
+                graphCtx.lineTo(x1, y1);
+                graphCtx.lineTo(padding + (t1 + t2) * scaleX, y1);
+                graphCtx.lineTo(padding + time * scaleX, height - padding - currentVelocity * scaleY);
+            }
+            
+            graphCtx.stroke();
+            
+            // Draw current point
+            graphCtx.fillStyle = '#1f2937';
+            graphCtx.beginPath();
+            graphCtx.arc(padding + time * scaleX, height - padding - currentVelocity * scaleY, 5, 0, 2 * Math.PI);
+            graphCtx.fill();
+        }
+
+        window.onload = () => {
+            drawAnimatedGraph(0);
+            window.addEventListener('resize', () => drawAnimatedGraph(currentTime));
+        };
+    </script>
+</body>
+</html>

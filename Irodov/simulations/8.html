@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>River Boat Problem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        canvas {
+            background-color: #b3e5fc;
+            border-radius: 0.5rem;
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-4xl w-full">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">River Boat Problem</h1>
+        
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">The Problem</h2>
+            <p class="text-gray-600 mb-4">Two boats, A and B, move away from a buoy anchored at the middle of a river along the mutually perpendicular straight lines; the boat A along the river, and the boat B across the river. Having moved off an equal distance from the buoy the boats returned. Find the ratio of times of motion of boats if the velocity of each boat with respect to water is $\eta = 1.2$ times greater than the stream velocity.</p>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">Simulation</h2>
+            <p class="text-gray-600 mb-4">Watch the two boats race. Click "Start" to begin the simulation.</p>
+            <div class="flex justify-center items-center space-x-4 mb-4">
+                <button id="startButton" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 transition-colors">Start</button>
+                <button id="resetButton" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-full shadow-lg hover:bg-red-700 transition-colors">Reset</button>
+            </div>
+            <div class="flex items-center space-x-4 mb-4 justify-center">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-yellow-400 rounded-full mr-2"></div>
+                    <span class="text-sm text-gray-700">Boat A (Along River)</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-lime-500 rounded-full mr-2"></div>
+                    <span class="text-sm text-gray-700">Boat B (Across River)</span>
+                </div>
+            </div>
+            <p id="timeDisplay" class="text-center text-gray-700 font-mono mb-4">Time: 0.00 s</p>
+            <canvas id="simulationCanvas" width="800" height="400" class="border-2 border-gray-300"></canvas>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">Step-by-Step Solution</h2>
+            <div id="solutionSteps" class="text-gray-600">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Step 1: Analyze the Motion of Boat A</h3>
+                    <p class="text-gray-600 mb-2">Boat A travels along the river, so its velocity is affected directly by the stream. The velocity of Boat A relative to the river bank is the sum of its velocity in the water and the river's velocity.</p>
+                    <p class="text-gray-600 mb-2">**Outward Journey (downstream):**</p>
+                    <p class="text-center text-lg font-mono text-gray-800 mb-4">$v_{\text{down}} = v_{b} + v_{r} = \eta v_{r} + v_{r} = (\eta + 1)v_{r}$</p>
+                    <p class="text-gray-600 mb-2">**Return Journey (upstream):**</p>
+                    <p class="text-center text-lg font-mono text-gray-800 mb-4">$v_{\text{up}} = v_{b} - v_{r} = \eta v_{r} - v_{r} = (\eta - 1)v_{r}$</p>
+                    <p class="text-gray-600 mb-2">The total time for Boat A is the sum of the downstream and upstream times:</p>
+                    <p class="text-center text-lg font-mono text-gray-800 mb-4">$T_{A} = t_{\text{down}} + t_{\text{up}} = \frac{L}{(\eta + 1)v_{r}} + \frac{L}{(\eta - 1)v_{r}} = \frac{L}{v_{r}} \left( \frac{2\eta}{\eta^2 - 1} \right)$</p>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Step 2: Analyze the Motion of Boat B</h3>
+                    <p class="text-gray-600 mb-2">Boat B travels across the river, perpendicular to the stream. To achieve this, it must angle itself upstream to cancel out the river's current. This forms a right-angled triangle with the velocities. The boat's velocity relative to the bank is:</p>
+                    <p class="text-center text-lg font-mono text-gray-800 mb-4">$v_{B} = \sqrt{v_{b}^2 - v_{r}^2} = \sqrt{(\eta v_{r})^2 - v_{r}^2} = v_{r}\sqrt{\eta^2 - 1}$</p>
+                    <p class="text-gray-600 mb-2">Since the outward and return journeys are identical, the total time is twice the time for a single trip:</p>
+                    <p class="text-center text-lg font-mono text-gray-800 mb-4">$T_{B} = 2 \cdot \frac{L}{v_{B}} = \frac{2L}{v_{r}\sqrt{\eta^2 - 1}}$</p>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Step 3: Calculate the Ratio of Times</h3>
+                    <p class="text-gray-600 mb-2">The ratio of the total times is $\frac{T_A}{T_B}$.</p>
+                    <p class="text-center text-lg font-mono text-gray-800 mb-4">$\frac{T_A}{T_B} = \frac{\frac{L}{v_{r}} \left( \frac{2\eta}{\eta^2 - 1} \right)}{\frac{2L}{v_{r}\sqrt{\eta^2 - 1}}} = \frac{\eta}{\sqrt{\eta^2 - 1}}$</p>
+                    <p class="text-gray-600 mb-2">Substituting $\eta = 1.2$ gives the final numerical result:</p>
+                    <p class="text-center text-lg font-mono text-gray-800 mb-4">$\frac{T_A}{T_B} = \frac{1.2}{\sqrt{(1.2)^2 - 1}} = \frac{1.2}{\sqrt{0.44}} \approx 1.809$</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            const startButton = document.getElementById('startButton');
+            const resetButton = document.getElementById('resetButton');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const canvas = document.getElementById('simulationCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Constants
+            const eta = 1.2;
+            const vr = 10; // Stream velocity (arbitrary value for simulation)
+            const vb = eta * vr; // Boat velocity wrt water
+            const L = 200; // Distance from buoy (in meters, for simulation scale)
+            
+            // Calculated values from the solution
+            const v_down = (eta + 1) * vr;
+            const v_up = (eta - 1) * vr;
+            const v_across = Math.sqrt(vb * vb - vr * vr);
+
+            const t_down = L / v_down;
+            const t_up = L / v_up;
+            const t_across = L / v_across;
+
+            const TA = t_down + t_up;
+            const TB = 2 * t_across;
+
+            const ratio = TA / TB;
+
+            // Simulation state
+            let time = 0;
+            let animationFrameId = null;
+            let isRunning = false;
+            let riverFlowXOffset = 0;
+
+            // Boat positions
+            let boatA = { x: 0, y: 0, direction: 1, finished: false }; // direction 1 for downstream, -1 for upstream
+            let boatB = { x: 0, y: 0, direction: 1, finished: false }; // direction 1 for across, -1 for return
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // River
+                ctx.fillStyle = '#b3e5fc';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // River flow lines
+                ctx.strokeStyle = '#81c784';
+                ctx.setLineDash([10, 10]);
+                for (let i = 0; i < canvas.width; i += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(i + riverFlowXOffset, 0);
+                    ctx.lineTo(i + riverFlowXOffset, canvas.height);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+
+                // Buoy
+                const buoyX = canvas.width / 2;
+                const buoyY = canvas.height / 2;
+                ctx.beginPath();
+                ctx.arc(buoyX, buoyY, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#4b5563';
+                ctx.fill();
+                ctx.font = '14px Inter';
+                ctx.fillText('Buoy', buoyX + 10, buoyY - 5);
+
+                // Boat A path
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(buoyX, buoyY);
+                ctx.lineTo(buoyX + L * (canvas.width / 400), buoyY);
+                ctx.moveTo(buoyX, buoyY);
+                ctx.lineTo(buoyX - L * (canvas.width / 400), buoyY);
+                ctx.stroke();
+
+                // Boat B path
+                ctx.strokeStyle = 'rgba(134, 239, 172, 0.5)';
+                ctx.beginPath();
+                ctx.moveTo(buoyX, buoyY);
+                ctx.lineTo(buoyX, buoyY - L * (canvas.width / 400));
+                ctx.moveTo(buoyX, buoyY);
+                ctx.lineTo(buoyX, buoyY + L * (canvas.width / 400));
+                ctx.stroke();
+
+                // Boat A
+                ctx.beginPath();
+                ctx.arc(buoyX + boatA.x, buoyY + boatA.y, 7, 0, 2 * Math.PI);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fill();
+
+                // Boat B
+                ctx.beginPath();
+                ctx.arc(buoyX + boatB.x, buoyY + boatB.y, 7, 0, 2 * Math.PI);
+                ctx.fillStyle = '#4ade80';
+                ctx.fill();
+
+                // Update buoy and path labels
+                ctx.fillStyle = '#4b5563';
+                ctx.font = '14px Inter';
+                ctx.fillText('Boat A path', buoyX + L * (canvas.width / 400) + 10, buoyY - 10);
+                ctx.fillText('Boat B path', buoyX + 10, buoyY - L * (canvas.width / 400) - 10);
+            }
+
+            function update() {
+                const deltaTime = 0.03; // small time step in seconds
+                time += deltaTime;
+
+                // River flow animation
+                riverFlowXOffset = (riverFlowXOffset + 1) % 40;
+
+                // Boat A (along river)
+                if (!boatA.finished) {
+                    if (boatA.direction === 1) { // Downstream
+                        boatA.x += v_down * deltaTime;
+                        if (boatA.x >= L) {
+                            boatA.x = L;
+                            boatA.direction = -1; // Change direction to upstream
+                        }
+                    } else { // Upstream
+                        boatA.x -= v_up * deltaTime;
+                        if (boatA.x <= 0) {
+                            boatA.x = 0;
+                            boatA.finished = true;
+                        }
+                    }
+                }
+
+                // Boat B (across river)
+                if (!boatB.finished) {
+                    if (boatB.direction === 1) { // Across river
+                        boatB.y -= v_across * deltaTime;
+                        if (boatB.y <= -L) {
+                            boatB.y = -L;
+                            boatB.direction = -1; // Change direction to return
+                        }
+                    } else { // Return trip
+                        boatB.y += v_across * deltaTime;
+                        if (boatB.y >= 0) {
+                            boatB.y = 0;
+                            boatB.finished = true;
+                        }
+                    }
+                }
+            
+                timeDisplay.textContent = `Time: ${time.toFixed(2)} s`;
+
+                if (boatA.finished && boatB.finished) {
+                    stopSimulation();
+                    timeDisplay.textContent = `Finished! Boat A: ${TA.toFixed(2)}s, Boat B: ${TB.toFixed(2)}s`;
+                }
+            }
+
+            function gameLoop() {
+                update();
+                draw();
+                if (isRunning) {
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                }
+            }
+
+            function startSimulation() {
+                if (!isRunning) {
+                    isRunning = true;
+                    gameLoop();
+                }
+            }
+
+            function stopSimulation() {
+                isRunning = false;
+                cancelAnimationFrame(animationFrameId);
+            }
+
+            function resetSimulation() {
+                stopSimulation();
+                time = 0;
+                boatA = { x: 0, y: 0, direction: 1, finished: false };
+                boatB = { x: 0, y: 0, direction: 1, finished: false };
+                timeDisplay.textContent = `Time: 0.00 s`;
+                draw();
+            }
+
+            startButton.addEventListener('click', startSimulation);
+            resetButton.addEventListener('click', resetSimulation);
+            
+            draw();
+
+        };
+    </script>
+</body>
+</html>

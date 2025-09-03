@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projectile Motion Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // MathJax configuration to enable inline LaTeX with $ delimiters
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .card {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-field {
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        canvas {
+            border-radius: 1rem;
+            background-color: #e2e8f0;
+            width: 100%;
+            height: auto;
+        }
+        #result {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1 class="text-3xl font-bold text-center text-gray-800">Kinematics Calculator & Visualizer</h1>
+    <p class="text-center text-gray-500">
+        Enter the initial parameters to calculate the distance between two projectiles and visualize their paths.
+    </p>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="input-group">
+            <label for="velocity" class="mb-2 text-sm font-medium text-gray-700">Initial Velocity (m/s)</label>
+            <input type="number" id="velocity" class="input-field" value="25" step="0.1" required>
+        </div>
+        <div class="input-group">
+            <label for="angle" class="mb-2 text-sm font-medium text-gray-700">Angle (degrees)</label>
+            <input type="number" id="angle" class="input-field" value="60" step="1" required>
+        </div>
+        <div class="input-group">
+            <label for="time" class="mb-2 text-sm font-medium text-gray-700">Time (s)</label>
+            <input type="number" id="time" class="input-field" value="1.70" step="0.01" required>
+        </div>
+    </div>
+
+    <button id="calculateBtn" class="btn btn-primary mt-4">Calculate Distance</button>
+    
+    <div id="output" class="text-center">
+        <p class="text-gray-600 font-medium">Distance after <span id="time-val">1.70</span>s:</p>
+        <p id="result">Waiting for calculation...</p>
+    </div>
+
+    <div class="w-full flex justify-center items-center">
+        <canvas id="kinematicsCanvas"></canvas>
+    </div>
+
+    <hr class="my-8 border-gray-300">
+
+    <div class="flex flex-col gap-4">
+        <h2 class="text-2xl font-bold text-gray-800">Problem & Solution</h2>
+        <div class="p-6 bg-gray-100 rounded-xl">
+            <h3 class="font-bold text-lg text-gray-700 mb-2">The Problem:</h3>
+            <p class="text-gray-600 leading-relaxed break-words">Two bodies were thrown simultaneously from the same point; one, straight up, and the other, at an angle of $\theta = 60^\circ$ to the horizontal. The initial velocity of each body is equal to $V = 25 \text{ m/s}$. Neglecting the air drag, find the distance between the bodies $t = 1.70 \text{ s}$ later.</p>
+        </div>
+        <div class="p-6 bg-gray-100 rounded-xl">
+            <h3 class="font-bold text-lg text-gray-700 mb-2">The Solution:</h3>
+            <p class="text-gray-600 leading-relaxed break-words">
+                To solve this problem, we find the final position vector of each body and then calculate the magnitude of the difference between these two vectors.
+                The position of the first body is given by:
+                $$ \vec{r}_1 = (V t - \frac{1}{2}gt^2)\hat{j} $$
+                The position of the second body is given by:
+                $$ \vec{r}_2 = (V\cos\theta)t\hat{i} + (V\sin\theta t - \frac{1}{2}gt^2)\hat{j} $$
+                The distance between the bodies is the magnitude of the vector difference, $\Delta\vec{r} = \vec{r}_2 - \vec{r}_1$:
+                $$ \Delta\vec{r} = (V\cos\theta)t\hat{i} + (V\sin\theta t - V t)\hat{j} $$
+                $$ d = |\Delta\vec{r}| = \sqrt{((V\cos\theta)t)^2 + ((V\sin\theta - V)t)^2} $$
+                With the given values, the final distance is calculated as:
+                $$ d = \sqrt{((25 \text{ m/s} \cdot \cos(60^\circ) \cdot 1.70 \text{ s})^2 + ((25 \text{ m/s} \cdot \sin(60^\circ) - 25 \text{ m/s}) \cdot 1.70 \text{ s})^2)} $$
+                This results in a distance of approximately **22.0 m**.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const G = 9.8; // m/s^2
+    const velocityInput = document.getElementById('velocity');
+    const angleInput = document.getElementById('angle');
+    const timeInput = document.getElementById('time');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const resultOutput = document.getElementById('result');
+    const timeValSpan = document.getElementById('time-val');
+    const canvas = document.getElementById('kinematicsCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Function to draw an arrow with a line and a simple arrowhead
+    function drawArrow(ctx, fromX, fromY, toX, toY, color) {
+        const headlen = 10; // length of head in pixels
+        const angle = Math.atan2(toY - fromY, toX - fromX);
+
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 3;
+        
+        // Draw the line
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+
+        // Draw the arrowhead
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Function to calculate positions
+    function getPositions(V, theta, t) {
+        // Body 1: Thrown straight up
+        const y1 = V * t - 0.5 * G * Math.pow(t, 2);
+        const pos1 = { x: 0, y: y1 };
+
+        // Body 2: Thrown at an angle
+        const angleRad = (theta * Math.PI) / 180;
+        const vx2 = V * Math.cos(angleRad);
+        const vy2 = V * Math.sin(angleRad);
+        const x2 = vx2 * t;
+        const y2 = vy2 * t - 0.5 * G * Math.pow(t, 2);
+        const pos2 = { x: x2, y: y2 };
+
+        return { pos1, pos2 };
+    }
+
+    // Function to draw the trajectories and vectors with a centered origin and flipped y-axis
+    function drawTrajectories(V, theta, maxTime, targetTime) {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Determine max dimensions for scaling to fit the drawing
+        const pos1MaxY = getPositions(V, 90, V/G).pos1.y;
+        const pos2MaxY = getPositions(V, theta, 2 * V * Math.sin((theta * Math.PI) / 180) / G).pos2.y;
+        const maxVert = Math.max(pos1MaxY, pos2MaxY);
+        const maxHoriz = getPositions(V, theta, 2 * V * Math.sin((theta * Math.PI) / 180) / G).pos2.x;
+        const maxTotalDim = Math.max(maxVert, maxHoriz);
+        
+        // Calculate the scale factor to fit everything in the canvas with some padding
+        const scale = Math.min(canvas.width, canvas.height) / (maxTotalDim * 2.5);
+
+        // Set the origin to the center of the canvas and flip the y-axis
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(1, -1);
+
+        // Draw axes (now centered)
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, 0);
+        ctx.moveTo(0, -canvas.height / 2);
+        ctx.lineTo(0, canvas.height / 2);
+        ctx.stroke();
+
+        const vectorLength = 70;
+        const angleRad = (theta * Math.PI) / 180;
+
+        // Draw initial velocity vector for Body 1
+        drawArrow(ctx, 0, 0, 0, vectorLength, '#ef4444');
+
+        // Draw initial velocity vector for Body 2
+        const vectorX = vectorLength * Math.cos(angleRad);
+        const vectorY = vectorLength * Math.sin(angleRad);
+        drawArrow(ctx, 0, 0, vectorX, vectorY, '#3b82f6');
+
+
+        // Draw path 1
+        ctx.beginPath();
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        for (let t = 0; t <= targetTime; t += 0.01) {
+            const pos = getPositions(V, 90, t).pos1;
+            const x = pos.x * scale;
+            const y = pos.y * scale;
+            if (t === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+
+        // Draw path 2
+        ctx.beginPath();
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        for (let t = 0; t <= targetTime; t += 0.01) {
+            const pos = getPositions(V, theta, t).pos2;
+            const x = pos.x * scale;
+            const y = pos.y * scale;
+            if (t === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+
+        // Draw final positions
+        const finalPos1 = getPositions(V, 90, targetTime).pos1;
+        const finalPos2 = getPositions(V, theta, targetTime).pos2;
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(finalPos1.x * scale, finalPos1.y * scale, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(finalPos2.x * scale, finalPos2.y * scale, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw the distance line
+        ctx.beginPath();
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]); // Dashed line
+        ctx.moveTo(finalPos1.x * scale, finalPos1.y * scale);
+        ctx.lineTo(finalPos2.x * scale, finalPos2.y * scale);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset line to solid
+
+        // Draw "Distance" label
+        const midX = ((finalPos1.x * scale) + (finalPos2.x * scale)) / 2;
+        const midY = ((finalPos1.y * scale) + (finalPos2.y * scale)) / 2;
+        const labelText = "Distance";
+        
+        ctx.restore(); // Restore the canvas transformation
+        ctx.font = "14px 'Inter', sans-serif";
+        ctx.fillStyle = '#1f2937';
+        ctx.textAlign = 'center';
+        ctx.fillText(labelText, canvas.width / 2 + midX, canvas.height / 2 - midY - 10);
+    }
+
+    // Function to resize the canvas and redraw content
+    function resizeCanvasAndDraw() {
+        // Set canvas dimensions to its container's size
+        const container = canvas.parentElement;
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientWidth * (2/3); // Maintain a 3:2 aspect ratio
+
+        calculateAndDraw();
+    }
+
+    function calculateAndDraw() {
+        const V = parseFloat(velocityInput.value);
+        const theta = parseFloat(angleInput.value);
+        const t = parseFloat(timeInput.value);
+
+        if (isNaN(V) || isNaN(theta) || isNaN(t) || V <= 0 || t <= 0) {
+            resultOutput.textContent = 'Please enter valid positive numbers.';
+            return;
+        }
+
+        timeValSpan.textContent = t.toFixed(2);
+        
+        // Calculate the difference in position vectors
+        const angleRad = (theta * Math.PI) / 180;
+        const deltaX = V * Math.cos(angleRad) * t;
+        const deltaY = (V * Math.sin(angleRad) - V) * t;
+        const distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+
+        resultOutput.textContent = distance.toFixed(2) + ' m';
+
+        drawTrajectories(V, theta, t * 1.5, t); // Draw trajectory for a bit longer for context
+    }
+
+    calculateBtn.addEventListener('click', calculateAndDraw);
+    window.addEventListener('load', () => {
+        resizeCanvasAndDraw(); // Initial resize and draw on page load
+    });
+    window.addEventListener('resize', resizeCanvasAndDraw); // Redraw on window resize
+</script>
+
+</body>
+</html>

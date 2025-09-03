@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boat Drifting Problem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .container {
+            max-width: 960px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="container mx-auto p-8 lg:p-12 space-y-8">
+        <div class="card p-8 md:p-10 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Boat Drifting Problem</h1>
+            <p class="mt-4 text-gray-600 max-w-2xl mx-auto">
+                Explore the physics of a boat crossing a river. Adjust the boat's heading and observe its impact on the final path and downstream drift.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 lg:gap-12">
+            <!-- Canvas and Controls -->
+            <div class="card p-6 flex flex-col items-center justify-center space-y-6">
+                <h2 class="text-2xl font-semibold text-gray-800">Visualizer</h2>
+                <div class="relative w-full aspect-video border-2 border-gray-200 rounded-xl overflow-hidden">
+                    <canvas id="physicsCanvas" class="w-full h-full"></canvas>
+                    <!-- Visual cue for optimal angle -->
+                    <div id="optimalAngleCue" class="absolute inset-0 flex items-center justify-center hidden">
+                        <span class="text-xl font-bold text-green-600 bg-white bg-opacity-80 px-4 py-2 rounded-lg">Optimal Angle Achieved!</span>
+                    </div>
+                </div>
+                <div class="w-full flex flex-col items-center space-y-2">
+                    <label for="angleSlider" class="text-sm font-medium text-gray-700">Boat Heading (relative to river flow)</label>
+                    <input type="range" id="angleSlider" min="91" max="180" value="120" step="1" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                    <span id="angleValue" class="text-lg font-bold text-blue-600">120°</span>
+                </div>
+                <div class="w-full grid grid-cols-2 gap-4 text-sm font-semibold text-gray-700">
+                    <p>River Speed ($v_r$): <span class="text-blue-600">2.0</span></p>
+                    <p>Boat Speed ($v_b$): <span class="text-blue-600">1.0</span></p>
+                    <p>Drift: <span id="driftValue" class="text-red-600">0.00</span></p>
+                    <p>Net Angle: <span id="netAngleValue" class="text-purple-600">0.00°</span></p>
+                </div>
+            </div>
+
+            <!-- Problem and Solution -->
+            <div class="card p-6 prose max-w-none">
+                <h2 class="text-2xl font-semibold text-gray-800">Problem & Solution</h2>
+                <div id="solutionContent">
+                    <h3 class="text-xl font-medium">Problem</h3>
+                    <p>A boat moves relative to water with a velocity which is $n=2.0$ times less than the river flow velocity. At what angle to the stream direction must the boat move to minimize drifting?</p>
+
+                    <h3 class="text-xl font-medium mt-6">Vector Components and Drifting</h3>
+                    <p>We can set up a coordinate system where the x-axis is in the direction of the river flow and the y-axis is perpendicular to it (across the river).</p>
+                    <p>The river's velocity is entirely in the x-direction: $\vec{v_r} = v_r \hat{i}$</p>
+                    <p>The boat's velocity relative to the water has both x and y components, dependent on the angle $\alpha$: $\vec{v_b} = v_b \cos\alpha \hat{i} + v_b \sin\alpha \hat{j}$</p>
+                    <p>The net velocity of the boat relative to the bank is the vector sum of these two velocities: $\vec{v_{net}} = \vec{v_r} + \vec{v_b}$</p>
+                    <p>$$\vec{v_{net}} = (v_r + v_b \cos\alpha) \hat{i} + (v_b \sin\alpha) \hat{j}$$</p>
+                    <p>The "drifting" we want to minimize is the displacement in the x-direction (downstream). To minimize this drift for a given river width $W$, we must find the angle that minimizes the time to cross the river while also counteracting the river flow.</p>
+                    <p>The time $t$ to cross the river of width $W$ is determined by the y-component of the net velocity: $$t = \frac{W}{v_{net, y}} = \frac{W}{v_b \sin\alpha}$$</p>
+                    <p>The downstream drift $D$ is the distance covered in the x-direction during this time: $$D = v_{net, x} \times t = (v_r + v_b \cos\alpha) \times \frac{W}{v_b \sin\alpha}$$</p>
+                    <p>$$D = W \left( \frac{v_r}{v_b \sin\alpha} + \frac{v_b \cos\alpha}{v_b \sin\alpha} \right)$$</p>
+                    <p>$$D = W \left( \frac{v_r}{v_b} \csc\alpha + \cot\alpha \right)$$</p>
+                    <p>Using the given ratio $\frac{v_r}{v_b} = n = 2.0$: $$D(\alpha) = W \left( 2.0 \csc\alpha + \cot\alpha \right)$$</p>
+
+                    <h3 class="text-xl font-medium mt-6">Minimizing the Drift</h3>
+                    <p>To find the angle $\alpha$ that minimizes the drift, we take the derivative of the drift $D(\alpha)$ with respect to $\alpha$ and set it equal to zero.</p>
+                    <p>$$\frac{dD}{d\alpha} = \frac{d}{d\alpha} \left[ W \left( 2.0 \csc\alpha + \cot\alpha \right) \right]$$</p>
+                    <p>$$\frac{dD}{d\alpha} = W (-2.0 \csc\alpha \cot\alpha - \csc^2\alpha) = 0$$</p>
+                    <p>Since $W$ is a non-zero constant, we can divide by it. We can also divide by $\csc\alpha$, as $\sin\alpha \ne 0$ for a valid crossing:</p>
+                    <p>$$-2.0 \cot\alpha - \csc\alpha = 0$$</p>
+                    <p>$$2.0 \cot\alpha = -\csc\alpha$$</p>
+                    <p>$$2.0 \frac{\cos\alpha}{\sin\alpha} = - \frac{1}{\sin\alpha}$$</p>
+                    <p>Assuming $\sin\alpha \ne 0$, we can cancel it out: $$2.0 \cos\alpha = -1$$</p>
+                    <p>$$\cos\alpha = -\frac{1}{2.0} = -0.5$$</p>
+                    <p>Finally, we find the angle $\alpha$: $$\alpha = \arccos(-0.5) = 120^\circ$$</p>
+                    <p>This angle of $120^\circ$ is measured with respect to the direction of the river's flow.</p>
+
+                    <h3 class="text-xl font-medium mt-6">Answer</h3>
+                    <p>To minimize drifting, the boat must move at an angle of $120^\circ$ to the stream direction.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('physicsCanvas');
+        const ctx = canvas.getContext('2d');
+        const angleSlider = document.getElementById('angleSlider');
+        const angleValueSpan = document.getElementById('angleValue');
+        const driftValueSpan = document.getElementById('driftValue');
+        const netAngleValueSpan = document.getElementById('netAngleValue');
+        const optimalAngleCue = document.getElementById('optimalAngleCue');
+
+        // Physics constants
+        const vr_mag = 2.0;
+        const vb_mag = 1.0;
+        const optimalAngleDeg = 120;
+        const riverWidth = 100; // Arbitrary value for visualization
+
+        // Canvas scaling
+        let scaleFactor = 1;
+        let originX, originY;
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+
+            originX = canvas.width / 4;
+            originY = canvas.height / 2;
+            scaleFactor = Math.min(canvas.width, canvas.height) / 10;
+        }
+
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawVector(x, y, vx, vy, color, label) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + vx, y - vy);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw arrowhead
+            const angle = Math.atan2(vy, vx);
+            const headlen = 10;
+            ctx.beginPath();
+            ctx.moveTo(x + vx, y - vy);
+            ctx.lineTo(x + vx - headlen * Math.cos(angle - Math.PI / 6), y - vy + headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x + vx - headlen * Math.cos(angle + Math.PI / 6), y - vy + headlen * Math.sin(angle + Math.PI / 6));
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // Draw label
+            ctx.fillStyle = color;
+            ctx.font = "14px Inter";
+            ctx.fillText(label, x + vx + 10, y - vy + 5);
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(0, originY);
+            ctx.lineTo(canvas.width, originY);
+            ctx.stroke();
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(originX, 0);
+            ctx.lineTo(originX, canvas.height);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = "12px Inter";
+            ctx.fillText('River Flow (x-axis)', originX + 20, originY + 20);
+            ctx.fillText('Across River (y-axis)', originX - 90, originY - 20);
+
+            // River banks
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, originY - riverWidth * scaleFactor);
+            ctx.lineTo(canvas.width, originY - riverWidth * scaleFactor);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function updateCanvas() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawGrid();
+
+            const alphaRad = angleSlider.value * Math.PI / 180;
+
+            // Vector components
+            const vx_r = vr_mag * scaleFactor;
+            const vy_r = 0;
+            const vx_b = vb_mag * Math.cos(alphaRad) * scaleFactor;
+            const vy_b = vb_mag * Math.sin(alphaRad) * scaleFactor;
+            const vx_net = vx_r + vx_b;
+            const vy_net = vy_b;
+
+            // Calculate drift
+            const time = riverWidth / (vb_mag * Math.sin(alphaRad));
+            const drift = (vr_mag + vb_mag * Math.cos(alphaRad)) * time;
+            driftValueSpan.textContent = `${drift.toFixed(2)}`;
+
+            // Calculate net angle
+            const netAngle = Math.atan2(vy_net, vx_net) * 180 / Math.PI;
+            netAngleValueSpan.textContent = `${netAngle.toFixed(2)}°`;
+
+            // Draw vectors
+            drawVector(originX, originY, vx_r, vy_r, '#059669', 'v_r'); // River velocity (green)
+            drawVector(originX, originY, vx_b, vy_b, '#3b82f6', 'v_b'); // Boat velocity (blue)
+            drawVector(originX, originY, vx_net, vy_net, '#8b5cf6', 'v_net'); // Net velocity (purple)
+
+            // Check for optimal angle
+            const currentAngle = parseInt(angleSlider.value, 10);
+            if (currentAngle === optimalAngleDeg) {
+                optimalAngleCue.classList.remove('hidden');
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(originX, originY);
+                ctx.lineTo(originX + vx_net, originY - vy_net);
+                ctx.stroke();
+            } else {
+                optimalAngleCue.classList.add('hidden');
+            }
+        }
+
+        angleSlider.addEventListener('input', () => {
+            angleValueSpan.textContent = `${angleSlider.value}°`;
+            updateCanvas();
+        });
+
+        // Initial draw
+        updateCanvas();
+
+    </script>
+</body>
+</html>

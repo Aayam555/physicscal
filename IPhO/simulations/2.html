@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPhO 1967 Problem 2 Solution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .info-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-4xl mx-auto space-y-8 bg-white p-8 rounded-lg shadow-xl">
+        
+        <!-- Problem Statement Section -->
+        <div class="problem-statement">
+            <h1 class="text-3xl font-bold mb-4 text-gray-800 section-title relative">Problem 2</h1>
+            <div class="text-gray-700 leading-relaxed mb-6">
+                <p>Consider an infinite network consisting of resistors (resistance of each of them is $r$) shown in the figure below. Find the resultant resistance $R_{AB}$ between points A and B. </p>
+            </div>
+            <div class="flex justify-center mb-6">
+                <img src="../images/1967-2.png" alt="Diagram of the infinite resistor network">
+            </div>
+        </div>
+        
+        <!-- Solution Section -->
+        <div class="solution-section">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 section-title relative">Solution</h2>
+            <div class="mb-6 space-y-4">
+                <p class="text-gray-700">This problem can be solved by recognizing the self-similar nature of the infinite network. If we remove the first section of the network, the remaining part is still an identical infinite network with the same resultant resistance, $R_{AB}$.</p>
+                <p class="text-gray-700">We can represent the circuit as a combination of the first section and the equivalent resistance of the rest of the network, which we call $R_{eq}$.</p>
+                <div class="flex justify-center my-4">
+                    <img src="../images/1967-2(simple).png" alt="Diagram showing the simplified circuit with the equivalent resistance.">
+                </div>
+                <p class="text-gray-700">From the diagram, we can see that the equivalent resistance $R_{eq}$ is the series combination of the first horizontal resistor with the parallel combination of the vertical resistor and the equivalent resistance of the rest of the network. This gives us the equation:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p>$$R_{eq} = r + \frac{1}{\frac{1}{r} + \frac{1}{R_{eq}}}$$</p>
+                    <p>$$R_{eq} = r + \frac{r \cdot R_{eq}}{r + R_{eq}}$$</p>
+                </div>
+                <p class="text-gray-700">Now, we solve this equation for $R_{eq}$. We multiply both sides by $(r + R_{eq})$:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p>$$R_{eq}(r + R_{eq}) = r(r + R_{eq}) + r R_{eq}$$</p>
+                    <p>$$r R_{eq} + R_{eq}^2 = r^2 + r R_{eq} + r R_{eq}$$</p>
+                    <p>$$R_{eq}^2 - r R_{eq} - r^2 = 0$$</p>
+                </div>
+                <p class="text-gray-700">This is a quadratic equation. We can solve for $R_{eq}$ using the quadratic formula, where $a=1$, $b=-r$, and $c=-r^2$.</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p>$$R_{eq} = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} = \frac{-(-r) \pm \sqrt{(-r)^2 - 4(1)(-r^2)}}{2(1)}$$</p>
+                    <p>$$R_{eq} = \frac{r \pm \sqrt{r^2 + 4r^2}}{2} = \frac{r \pm \sqrt{5r^2}}{2}$$</p>
+                    <p>$$R_{eq} = \frac{r(1 \pm \sqrt{5})}{2}$$</p>
+                </div>
+                <p class="text-gray-700">Since resistance must be a positive value, we take the positive root.</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="font-bold text-gray-800 mt-2">The resultant resistance is $R_{AB} = r \left( \frac{1 + \sqrt{5}}{2} \right)$.</p>
+                </div>
+                <p class="text-gray-700">Note that the term $\frac{1 + \sqrt{5}}{2}$ is the golden ratio, often denoted by $\phi$.</p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

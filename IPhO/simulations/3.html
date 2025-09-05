@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPhO 1967 Problem 3 Solution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .info-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-4xl mx-auto space-y-8 bg-white p-8 rounded-lg shadow-xl">
+        
+        <!-- Problem Statement Section -->
+        <div class="problem-statement">
+            <div class="flex justify-center mb-6">
+                <img src="../images/1967-3.png" alt="Diagram showing a ball suspended on a thread (A) and a ball resting on a horizontal plane (B).">
+            </div>
+        </div>
+        
+        <!-- Solution Section -->
+        <div class="solution-section">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 section-title relative">Solution</h2>
+            <div class="mb-6 space-y-4">
+                <p class="text-gray-700">The final temperatures of the two balls will NOT be the same. The key to this problem is a more nuanced application of the **First Law of Thermodynamics**, which relates the change in a system's internal energy to heat and work. While it's easy to assume the work done is zero, the thermal expansion of the balls creates a small but significant effect on their potential energy.</p>
+                
+                <h3 class="text-xl font-semibold text-gray-800 mt-6">Analysis of Ball A (Hanging)</h3>
+                <p class="text-gray-700">As ball A is heated, it expands. Due to its suspension, this expansion causes its center of mass to move downwards. This corresponds to a **decrease in its gravitational potential energy**. From the perspective of the First Law, this change in potential energy is converted into additional internal energy for the ball. Essentially, the gravitational field does a small amount of work *on* the ball, supplementing the supplied heat and causing a greater increase in temperature.</p>
+                
+                <h3 class="text-xl font-semibold text-gray-800 mt-6">Analysis of Ball B (on Horizontal Plane)</h3>
+                <p class="text-gray-700">Ball B is resting on a surface. As it expands, its center of mass is lifted slightly upwards. This requires a small amount of work to be done *by* the system against gravity. This work must come from the supplied heat energy. Therefore, a portion of the heat provided is used to increase the ball's gravitational potential energy, leaving less energy available to increase its internal energy and, consequently, its temperature.</p>
+                
+                <h3 class="text-xl font-semibold text-gray-800 mt-6">Conclusion</h3>
+                <p class="text-gray-700">Since both balls receive the same quantity of heat, but the work done is different for each, their final internal energies will not be the same. The final temperature of ball A will be slightly higher than that of ball B. The effect is very small, as demonstrated by the detailed calculations in the original solution, but it is a real physical phenomenon.</p>
+
+                <h3 class="text-xl font-semibold text-gray-800 mt-6">Numerical Example (from PDF)</h3>
+                <p class="text-gray-700">The change in the internal energy of the balls is given by $Q_i = mc \Delta t_i$, and the change in potential energy is $\Delta E_i = mgr\alpha\Delta t_i$. Taking into account the work done, the First Law of Thermodynamics can be written for each ball as:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p>$$Q = (mc - Amgr\alpha)\Delta t_A$$</p>
+                    <p>$$Q = (mc + Amgr\alpha)\Delta t_B$$</p>
+                </div>
+                <p class="text-gray-700">Solving for the change in temperature for each ball, we get:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p>$$\Delta t_A = \frac{Q}{mc-Amgr\alpha}$$</p>
+                    <p>$$\Delta t_B = \frac{Q}{mc+Amgr\alpha}$$</p>
+                </div>
+                <p class="text-gray-700">The difference in the final temperatures, $\Delta t = \Delta t_A - \Delta t_B$, can be approximated by:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p>$$\Delta t \approx \frac{2AQgr\alpha}{mc^2}$$</p>
+                </div>
+                <p class="text-gray-700">Using the numerical values provided in the solution for a lead ball with a radius of $10\text{ cm}$ and $Q = 50\text{ kcal}$:</p>
+                <ul class="list-disc list-inside text-gray-700">
+                    <li>$Q = 50\text{ kcal}$</li>
+                    <li>$A \approx 0.24\frac{\text{cal}}{\text{J}}$</li>
+                    <li>$g \approx 9.8\frac{\text{m}}{\text{s}^2}$</li>
+                    <li>$m \approx 47\text{ kg}$</li>
+                    <li>$r = 0.1\text{ m}$</li>
+                    <li>$c \approx 0.031\frac{\text{cal}}{\text{g} \cdot \text{K}}$</li>
+                    <li>$\alpha \approx 29 \cdot 10^{-6}\text{ K}^{-1}$</li>
+                </ul>
+                <p class="text-gray-700 mt-4">The calculated difference is extremely small:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p>$$\Delta t \approx 1.5 \cdot 10^{-5}\text{ K}$$</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg mt-6">
+                    <p class="font-bold text-gray-800">The final temperature of ball A will be higher than the final temperature of ball B.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPhO 1967 Problem 4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- MathJax configuration to enable inline math with single dollar signs -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']]
+        }
+      };
+    </script>
+    <!-- MathJax library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .markdown-content p {
+            margin-bottom: 1em;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8 flex items-center justify-center min-h-screen">
+
+    <div class="container bg-white p-8 rounded-lg shadow-xl border border-gray-200">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">IPhO 1967 Problem 4</h1>
+            <p class="text-gray-500 italic">A Classic Physics Olympiad Problem</p>
+        </header>
+
+        <section id="problem" class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4 pb-2 border-b-2 border-blue-500">The Problem</h2>
+            <div class="markdown-content text-gray-600 leading-relaxed">
+                <p>A closed vessel with volume $V_{0}=10$ liters contains dry air in the normal conditions ($t_{0}=0^{\circ}C$, $p_{0}=1$ atm). In some moment 3 g of water were added to the vessel and the system was warmed up to $t=100^{\circ}C$.</p>
+                <p><strong>Find the pressure in the vessel. Discuss assumptions you made to solve the problem.</strong></p>
+            </div>
+        </section>
+
+        <section id="solution">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4 pb-2 border-b-2 border-blue-500">The Solution</h2>
+            <div class="markdown-content text-gray-600 leading-relaxed">
+                <p>The solution starts by considering the state of the water added to the vessel. We first assume that all the water evaporates.</p>
+                
+                <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Assumptions</h3>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>The added water completely evaporates. The density of the water vapor ($0.300 \text{ g/l}$) is less than the density of saturated vapor at $100^{\circ}C$ ($0.597 \text{ g/l}$), so no liquid water remains.</li>
+                    <li>Both air and the unsaturated water vapor behave as ideal gases.</li>
+                </ul>
+
+                <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Applying Physics Laws</h3>
+                <p>According to Dalton's Law, the total pressure ($p$) in the vessel is the sum of the partial pressures of the air ($p_a$) and the water vapor ($p_v$):</p>
+                <div class="my-4 p-4 bg-blue-50 rounded-lg text-blue-800">
+                    <p class="text-center text-lg font-bold">$$p = p_{a} + p_{v}$$</p>
+                </div>
+                
+                <h4 class="font-bold text-gray-700 mt-4">Pressure of the Air ($p_a$)</h4>
+                <p>Since the volume is constant, we can apply Gay-Lussac's Law to the air. The pressure is proportional to the absolute temperature:</p>
+                <div class="my-4 p-4 bg-gray-50 rounded-lg text-gray-700">
+                    <p class="text-center text-lg font-bold">$$p_{a} = p_{0}\left(\frac{273 + t}{273}\right)$$</p>
+                </div>
+                
+                <h4 class="font-bold text-gray-700 mt-4">Pressure of the Water Vapor ($p_v$)</h4>
+                <p>We can find the pressure of the water vapor using the ideal gas law:</p>
+                <div class="my-4 p-4 bg-gray-50 rounded-lg text-gray-700">
+                    <p class="text-center text-lg font-bold">$$\frac{p_{v}V_{0}}{273+t} = \frac{m}{\mu}R$$</p>
+                </div>
+                <p>where $m$ is the mass of the vapor, $\mu$ is the molecular mass of water, and $R$ is the universal gas constant. Rearranging for $p_v$:</p>
+                <div class="my-4 p-4 bg-gray-50 rounded-lg text-gray-700">
+                    <p class="text-center text-lg font-bold">$$p_{v} = \frac{m}{\mu}R\left(\frac{273+t}{V_{0}}\right)$$</p>
+                </div>
+
+                <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Final Pressure Calculation</h3>
+                <p>Substituting the expressions for $p_a$ and $p_v$ back into the total pressure equation, we get the final formula:</p>
+                <div class="my-4 p-4 bg-green-50 rounded-lg text-green-800">
+                    <p class="text-center text-lg font-bold">$$p = p_{0}\frac{273+t}{273} + \frac{m}{\mu}R\frac{273+t}{V_{0}}$$</p>
+                </div>
+                <p>Using the given numerical values:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>$p_0 = 1$ atm</li>
+                    <li>$t = 100^{\circ}C$</li>
+                    <li>$m = 3$ g</li>
+                    <li>$V_0 = 10$ l</li>
+                </ul>
+                <p>The numerical solution gives:</p>
+                <p class="font-bold text-gray-700 mt-4">
+                    $$p = (1.366 + 0.516) \text{ atm} \approx 1.88 \text{ atm}$$
+                </p>
+            </div>
+        </section>
+        
+        <footer class="mt-12 text-center text-gray-400 text-sm">
+            <p>&copy; IPhO 1967 Problem 4</p>
+        </footer>
+    </div>
+
+</body>
+</html>

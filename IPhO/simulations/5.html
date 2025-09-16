@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPhO 1967 Experimental Problem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 960px;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        h1, h2, h3 {
+            color: #0f172a;
+            font-weight: 700;
+        }
+        /* Custom styles for the visualizers */
+        .visualizer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 150px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            position: relative;
+        }
+        .beaker {
+            width: 80px;
+            height: 100%;
+            background-color: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 0 0 10px 10px;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse;
+            overflow: hidden;
+        }
+        .liquid {
+            transition: height 0.5s ease-in-out, background-color 0.5s ease-in-out;
+            width: 100%;
+        }
+        .water { background-color: #3b82f6; }
+        .petroleum { background-color: #fcd34d; }
+        .liquid-label {
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #475569;
+        }
+        .temperature-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: #1e293b;
+            text-shadow: 1px 1px 2px white;
+        }
+        .thermometer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 100px;
+            background-color: #e2e8f0;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column-reverse;
+            overflow: hidden;
+        }
+        .mercury {
+            width: 100%;
+            background-color: #ef4444;
+            transition: height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+
+    <div class="container mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-2">IPhO 1967 Experimental Problem</h1>
+            <p class="text-lg text-slate-600">Specific Heat of Petroleum</p>
+        </header>
+
+        <section class="card">
+            <h2 class="text-2xl font-bold mb-4">Problem Statement</h2>
+            <div class="prose max-w-none">
+                <p><strong>Devices and materials given:</strong></p>
+                <ol class="list-decimal list-inside pl-4 mt-2">
+                    <li>Balance (without weights)</li>
+                    <li>Calorimeter</li>
+                    <li>Thermometer</li>
+                    <li>Source of voltage</li>
+                    <li>Switches</li>
+                    <li>Wires</li>
+                    <li>Electric heater</li>
+                    <li>Stop-watch</li>
+                    <li>Beakers</li>
+                    <li>Water</li>
+                    <li>Petroleum</li>
+                    <li>Sand (for balancing)</li>
+                </ol>
+                <p class="mt-4">
+                    <strong>The task:</strong> Determine the specific heat of petroleum. The specific heat of water is \(1~cal/(g\cdot^\circ C)\) and the specific heat of the calorimeter is \(0.092~cal/(g\cdot^\circ C)\). Discuss the assumptions made in the solution.
+                </p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="text-2xl font-bold mb-4">Solution Methods</h2>
+            <p class="text-slate-700 mb-6">The provided devices allowed for several methods. Students used the following three main approaches to solve the problem:</p>
+
+            <!-- Method 1 -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">1. Comparison of Velocity of Warming Up</h3>
+                <p class="mb-4">
+                    This method compares the time it takes for water and petroleum to warm up by the same amount using a constant electric heater.
+                </p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="font-medium">Heat absorbed by water and calorimeter:</p>
+                    <p class="text-center my-2">\[ Q_{w}=m_{w}c_{w}\Delta t_{w}+m_{c}c_{c}\Delta t_{w} = (m_w c_w + m_c c_c)\Delta t_w \]</p>
+                    <p class="font-medium">Heat absorbed by petroleum and calorimeter:</p>
+                    <p class="text-center my-2">\[ Q_{p}=m_{p}c_{p}\Delta t_{p}+m_{c}c_{c}\Delta t_{p} = (m_p c_p + m_c c_c)\Delta t_p \]</p>
+                    <p class="font-medium">Heat provided by the heater:</p>
+                    <p class="text-center my-2">\[ Q_{heater}=P\tau = A\frac{U^{2}}{R}\tau \]</p>
+                    <p class="font-medium mt-4">For the same temperature change (\(\Delta t_w = \Delta t_p = \Delta t\)) and assuming heat losses are negligible, we have:</p>
+                    <p class="text-center my-2">\[ A\frac{U^{2}}{R}\tau_{w}=(m_{w}c_{w}+m_{c}c_{c})\Delta t \]</p>
+                    <p class="text-center my-2">\[ A\frac{U^{2}}{R}\tau_{p}=(m_{p}c_{p}+m_{c}c_{c})\Delta t \]</p>
+                    <p class="font-medium mt-4">By taking the ratio of these two equations, the common terms cancel out:</p>
+                    <p class="text-center my-2">\[ \frac{\tau_{w}}{\tau_{p}} = \frac{m_{w}c_{w}+m_{c}c_{c}}{m_{p}c_{p}+m_{c}c_{c}} \]</p>
+                    <p class="font-medium mt-4">With the simplification of using sand to make the masses equal (\(m_{w}=m_{p}=m_{c}=m\)), this simplifies to:</p>
+                    <p class="text-center my-2">\[ \frac{\tau_{w}}{\tau_{p}} = \frac{c_{w}+c_{c}}{c_{p}+c_{c}} \]</p>
+                    <p class="font-medium mt-4">Solving for \(c_{p}\):</p>
+                    <p class="text-center my-2">\[ c_{p} = \left(\frac{\tau_{p}}{\tau_{w}}\right)(c_{w}+c_{c})-c_{c} \]</p>
+                </div>
+                <div class="mt-6 p-6 bg-blue-50 rounded-lg border-blue-200 border-2">
+                    <h4 class="text-lg font-bold mb-4 text-blue-700">Interactive Simulation: Warming Up</h4>
+                    <p class="mb-2">Adjust the heating times for water and petroleum to see the calculated specific heat of petroleum.</p>
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8 mb-4">
+                        <div class="w-full md:w-1/2">
+                            <label for="warmup-water-time" class="block text-sm font-medium text-gray-700">Water heating time (\(\tau_{w}\) in seconds): <span id="warmup-water-time-value" class="font-bold">20</span></label>
+                            <input type="range" id="warmup-water-time" min="10" max="100" value="20" class="w-full h-2 bg-blue-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="w-full md:w-1/2">
+                            <label for="warmup-petroleum-time" class="block text-sm font-medium text-gray-700">Petroleum heating time (\(\tau_{p}\) in seconds): <span id="warmup-petroleum-time-value" class="font-bold">15</span></label>
+                            <input type="range" id="warmup-petroleum-time" min="10" max="100" value="15" class="w-full h-2 bg-yellow-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="visualizer">
+                        <div class="beaker">
+                            <div class="liquid water" id="warmup-water-liquid"></div>
+                            <span class="liquid-label">Water</span>
+                        </div>
+                        <div class="beaker">
+                            <div class="liquid petroleum" id="warmup-petroleum-liquid"></div>
+                            <span class="liquid-label">Petroleum</span>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-center text-lg font-bold">Calculated Specific Heat (\(c_p\)): <span id="warmup-result" class="text-blue-600">0.53 cal/(g·°C)</span></p>
+                </div>
+            </div>
+
+            <!-- Method 2 -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">2. Comparison of Velocity of Cooling Down</h3>
+                <p class="mb-4">
+                    This method is based on Newton's law of cooling. It involves heating the liquids first and then observing their cooling over time.
+                </p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="font-medium">Heat lost by water and calorimeter:</p>
+                    <p class="text-center my-2">\[ \Delta Q_{w}=(m_{w}c_{w}+m_{c}c_{c})\Delta t_{w} \]</p>
+                    <p class="font-medium">Heat lost by petroleum and calorimeter:</p>
+                    <p class="text-center my-2">\[ \Delta Q_{p}=(m_{p}c_{p}+m_{c}c_{c})\Delta t_{p} \]</p>
+                    <p class="font-medium mt-4">According to the solution, the ratio of heat lost is equal to the ratio of the cooling times:</p>
+                    <p class="text-center my-2">\[ \frac{\Delta Q_{w}}{\Delta Q_{p}}=\frac{\tau_{w}}{\tau_{p}} \]</p>
+                    <p class="font-medium mt-4">By combining the above equations and assuming the same temperature change for both liquids (\(\Delta t_w = \Delta t_p = \Delta t\)), we get:</p>
+                    <p class="text-center my-2">\[ \frac{(m_{w}c_{w}+m_{c}c_{c})\Delta t}{(m_{p}c_{p}+m_{c}c_{c})\Delta t} = \frac{\tau_{w}}{\tau_{p}} \]</p>
+                    <p class="font-medium mt-4">Assuming \(m_{w}=m_{p}=m_{c}=m\), this simplifies to:</p>
+                    <p class="text-center my-2">\[ \frac{c_{w}+c_{c}}{c_{p}+c_{c}} = \frac{\tau_{w}}{\tau_{p}} \]</p>
+                    <p class="font-medium mt-4">Solving for \(c_{p}\):</p>
+                    <p class="text-center my-2">\[ c_{p} = \left(\frac{\tau_{p}}{\tau_{w}}\right)(c_{w}+c_{c})-c_{c} \]</p>
+                </div>
+                <div class="mt-6 p-6 bg-blue-50 rounded-lg border-blue-200 border-2">
+                    <h4 class="text-lg font-bold mb-4 text-blue-700">Interactive Simulation: Cooling Down</h4>
+                    <p class="mb-2">Adjust the cooling times for water and petroleum to determine the specific heat.</p>
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8 mb-4">
+                        <div class="w-full md:w-1/2">
+                            <label for="cooldown-water-time" class="block text-sm font-medium text-gray-700">Water cooling time (\(\tau_{w}\) in seconds): <span id="cooldown-water-time-value" class="font-bold">30</span></label>
+                            <input type="range" id="cooldown-water-time" min="10" max="100" value="30" class="w-full h-2 bg-blue-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="w-full md:w-1/2">
+                            <label for="cooldown-petroleum-time" class="block text-sm font-medium text-gray-700">Petroleum cooling time (\(\tau_{p}\) in seconds): <span id="cooldown-petroleum-time-value" class="font-bold">18</span></label>
+                            <input type="range" id="cooldown-petroleum-time" min="10" max="100" value="18" class="w-full h-2 bg-yellow-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="visualizer">
+                        <div class="beaker">
+                            <div class="liquid water" id="cooldown-water-liquid"></div>
+                            <span class="liquid-label">Water</span>
+                        </div>
+                        <div class="beaker">
+                            <div class="liquid petroleum" id="cooldown-petroleum-liquid"></div>
+                            <span class="liquid-label">Petroleum</span>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-center text-lg font-bold">Calculated Specific Heat (\(c_p\)): <span id="cooldown-result" class="text-blue-600">0.53 cal/(g·°C)</span></p>
+                </div>
+            </div>
+
+            <!-- Method 3 -->
+            <div>
+                <h3 class="text-xl font-semibold mb-2">3. Traditional Heat Balance</h3>
+                <p class="mb-4">
+                    This is a standard calorimetry method where petroleum is added to water in the calorimeter, and the final equilibrium temperature is measured.
+                </p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="font-medium">Heat lost by hot water and calorimeter:</p>
+                    <p class="text-center my-2">\[ Q_{lost}=(m_{w}c_{w}+m_{c}c_{c})(t_{1}-t) \]</p>
+                    <p class="font-medium">Heat gained by cold petroleum:</p>
+                    <p class="text-center my-2">\[ Q_{gained}=m_{p}c_{p}(t-t_{2}) \]</p>
+                    <p class="font-medium mt-4">By setting the heat lost equal to the heat gained (\(Q_{lost}=Q_{gained}\)), assuming no heat losses to the surroundings:</p>
+                    <p class="text-center my-2">\[ (m_{w}c_{w}+m_{c}c_{c})(t_{1}-t)=m_{p}c_{p}(t-t_{2}) \]</p>
+                    <p class="font-medium mt-4">With the simplification of using sand to make the masses equal (\(m_{w}=m_{p}=m_{c}=m\)), this simplifies to:</p>
+                    <p class="text-center my-2">\[ (c_{w}+c_{c})(t_{1}-t)=c_{p}(t-t_{2}) \]</p>
+                    <p class="font-medium mt-4">Solving for \(c_{p}\):</p>
+                    <p class="text-center my-2">\[ c_{p}=(c_{w}+c_{c})\frac{t_{1}-t}{t-t_{2}} \]</p>
+                </div>
+                <div class="mt-6 p-6 bg-blue-50 rounded-lg border-blue-200 border-2">
+                    <h4 class="text-lg font-bold mb-4 text-blue-700">Interactive Simulation: Heat Balance</h4>
+                    <p class="mb-2">Set the initial and final temperatures to calculate the specific heat.</p>
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8 mb-4">
+                        <div class="w-full md:w-1/3">
+                            <label for="heat-t1" class="block text-sm font-medium text-gray-700">Initial Water Temp (\(t_1\) in °C): <span id="heat-t1-value" class="font-bold">60</span></label>
+                            <input type="range" id="heat-t1" min="30" max="100" value="60" class="w-full h-2 bg-red-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="w-full md:w-1/3">
+                            <label for="heat-t2" class="block text-sm font-medium text-gray-700">Initial Petroleum Temp (\(t_2\) in °C): <span id="heat-t2-value" class="font-bold">20</span></label>
+                            <input type="range" id="heat-t2" min="10" max="50" value="20" class="w-full h-2 bg-yellow-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="w-full md:w-1/3">
+                            <label for="heat-t-final" class="block text-sm font-medium text-gray-700">Final Temp (\(t\) in °C): <span id="heat-t-final-value" class="font-bold">40</span></label>
+                            <input type="range" id="heat-t-final" min="20" max="60" value="40" class="w-full h-2 bg-green-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="visualizer" style="height: 180px;">
+                        <div class="beaker">
+                            <span class="liquid-label">Hot Water</span>
+                            <div class="liquid water" id="heat-water-liquid"></div>
+                            <span class="temperature-label" id="heat-water-temp-label">60°C</span>
+                        </div>
+                        <div class="beaker">
+                            <span class="liquid-label">Cold Petroleum</span>
+                            <div class="liquid petroleum" id="heat-petroleum-liquid"></div>
+                            <span class="temperature-label" id="heat-petroleum-temp-label">20°C</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="text-3xl font-bold mb-2">+</span>
+                            <span class="text-sm text-gray-600">Mix to get</span>
+                        </div>
+                        <div class="beaker w-[180px] h-[180px] flex-col items-center">
+                            <span class="liquid-label">Mixture</span>
+                            <div class="liquid" id="heat-mixed-liquid"></div>
+                            <span class="temperature-label" id="heat-final-temp-label">40°C</span>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-center text-lg font-bold">Calculated Specific Heat (\(c_p\)): <span id="heat-balance-result" class="text-blue-600">0.53 cal/(g·°C)</span></p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-sm text-slate-500 mt-10">
+            <p>Content adapted from the IPhO 1967 Experimental Problem and its solution. Simulations use simplified formulas where masses are assumed to be equal to the calorimeter mass.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cw = 1.0;
+            const cc = 0.092;
+
+            // --- Simulation 1: Warming Up ---
+            const warmupWaterTimeInput = document.getElementById('warmup-water-time');
+            const warmupPetroleumTimeInput = document.getElementById('warmup-petroleum-time');
+            const warmupWaterTimeValue = document.getElementById('warmup-water-time-value');
+            const warmupPetroleumTimeValue = document.getElementById('warmup-petroleum-time-value');
+            const warmupWaterLiquid = document.getElementById('warmup-water-liquid');
+            const warmupPetroleumLiquid = document.getElementById('warmup-petroleum-liquid');
+            const warmupResult = document.getElementById('warmup-result');
+
+            function updateWarmupSimulation() {
+                const tau1 = parseFloat(warmupWaterTimeInput.value);
+                const tau2 = parseFloat(warmupPetroleumTimeInput.value);
+
+                warmupWaterTimeValue.textContent = tau1;
+                warmupPetroleumTimeValue.textContent = tau2;
+
+                // Scale liquid height for visualization
+                const maxTime = Math.max(warmupWaterTimeInput.max, warmupPetroleumTimeInput.max);
+                warmupWaterLiquid.style.height = `${(tau1 / maxTime) * 100}%`;
+                warmupPetroleumLiquid.style.height = `${(tau2 / maxTime) * 100}%`;
+                
+                // Calculate specific heat based on simplified formula (m_w = m_p = m_c)
+                // cp = (tau_p / tau_w) * (c_w + c_c) - c_c
+                let cp = (tau2 / tau1) * (cw + cc) - cc;
+                if (cp < 0) cp = 0; // Prevent negative values
+                warmupResult.textContent = `${cp.toFixed(2)} cal/(g·°C)`;
+            }
+
+            warmupWaterTimeInput.addEventListener('input', updateWarmupSimulation);
+            warmupPetroleumTimeInput.addEventListener('input', updateWarmupSimulation);
+            updateWarmupSimulation();
+
+            // --- Simulation 2: Cooling Down ---
+            const cooldownWaterTimeInput = document.getElementById('cooldown-water-time');
+            const cooldownPetroleumTimeInput = document.getElementById('cooldown-petroleum-time');
+            const cooldownWaterTimeValue = document.getElementById('cooldown-water-time-value');
+            const cooldownPetroleumTimeValue = document.getElementById('cooldown-petroleum-time-value');
+            const cooldownWaterLiquid = document.getElementById('cooldown-water-liquid');
+            const cooldownPetroleumLiquid = document.getElementById('cooldown-petroleum-liquid');
+            const cooldownResult = document.getElementById('cooldown-result');
+
+            function updateCooldownSimulation() {
+                const tau1 = parseFloat(cooldownWaterTimeInput.value);
+                const tau2 = parseFloat(cooldownPetroleumTimeInput.value);
+
+                cooldownWaterTimeValue.textContent = tau1;
+                cooldownPetroleumTimeValue.textContent = tau2;
+
+                const maxTime = Math.max(cooldownWaterTimeInput.max, cooldownPetroleumTimeInput.max);
+                cooldownWaterLiquid.style.height = `${(1 - (tau1 / maxTime)) * 100}%`;
+                cooldownPetroleumLiquid.style.height = `${(1 - (tau2 / maxTime)) * 100}%`;
+                
+                // c_p = (tau_p / tau_w) * (c_w + c_c) - c_c
+                let cp = (tau2 / tau1) * (cw + cc) - cc;
+                if (cp < 0) cp = 0;
+                cooldownResult.textContent = `${cp.toFixed(2)} cal/(g·°C)`;
+            }
+
+            cooldownWaterTimeInput.addEventListener('input', updateCooldownSimulation);
+            cooldownPetroleumTimeInput.addEventListener('input', updateCooldownSimulation);
+            updateCooldownSimulation();
+
+            // --- Simulation 3: Heat Balance ---
+            const heatT1Input = document.getElementById('heat-t1');
+            const heatT2Input = document.getElementById('heat-t2');
+            const heatTFinalInput = document.getElementById('heat-t-final');
+            const heatT1Value = document.getElementById('heat-t1-value');
+            const heatT2Value = document.getElementById('heat-t2-value');
+            const heatTFinalValue = document.getElementById('heat-t-final-value');
+            const heatWaterLiquid = document.getElementById('heat-water-liquid');
+            const heatPetroleumLiquid = document.getElementById('heat-petroleum-liquid');
+            const heatMixedLiquid = document.getElementById('heat-mixed-liquid');
+            const heatWaterTempLabel = document.getElementById('heat-water-temp-label');
+            const heatPetroleumTempLabel = document.getElementById('heat-petroleum-temp-label');
+            const heatFinalTempLabel = document.getElementById('heat-final-temp-label');
+            const heatBalanceResult = document.getElementById('heat-balance-result');
+            
+            function updateHeatBalanceSimulation() {
+                const t1 = parseFloat(heatT1Input.value);
+                const t2 = parseFloat(heatT2Input.value);
+                const t = parseFloat(heatTFinalInput.value);
+
+                heatT1Value.textContent = t1;
+                heatT2Value.textContent = t2;
+                heatTFinalValue.textContent = t;
+
+                heatWaterTempLabel.textContent = `${t1}°C`;
+                heatPetroleumTempLabel.textContent = `${t2}°C`;
+                heatFinalTempLabel.textContent = `${t}°C`;
+
+                // Visualize temperatures
+                heatWaterLiquid.style.height = `${t1 / 100 * 100}%`;
+                heatPetroleumLiquid.style.height = `${t2 / 100 * 100}%`;
+                
+                // Set the final color to be a blend of the two
+                const r1 = 59, g1 = 130, b1 = 246; // Tailwind blue-500
+                const r2 = 252, g2 = 211, b2 = 77; // Tailwind yellow-300
+                const finalRatio = (t - t2) / (t1 - t2);
+                const finalR = r1 + (r2 - r1) * finalRatio;
+                const finalG = g1 + (r2 - r1) * finalRatio;
+                const finalB = b1 + (r2 - r1) * finalRatio;
+                
+                heatMixedLiquid.style.backgroundColor = `rgb(${finalR}, ${finalG}, ${finalB})`;
+                heatMixedLiquid.style.height = `${t/100 * 100}%`;
+
+                // Calculate specific heat: cp=(cw+cc)*(t1-t)/(t-t2)
+                if (t > t2 && t1 > t) {
+                    let cp = (cw + cc) * (t1 - t) / (t - t2);
+                    if (cp < 0) cp = 0;
+                    heatBalanceResult.textContent = `${cp.toFixed(2)} cal/(g·°C)`;
+                } else {
+                    heatBalanceResult.textContent = "Invalid temps";
+                }
+            }
+            
+            heatT1Input.addEventListener('input', updateHeatBalanceSimulation);
+            heatT2Input.addEventListener('input', updateHeatBalanceSimulation);
+            heatTFinalInput.addEventListener('input', updateHeatBalanceSimulation);
+            updateHeatBalanceSimulation();
+
+            // Rerender all math on page load
+            MathJax.typesetPromise();
+        });
+    </script>
+
+</body>
+</html>
